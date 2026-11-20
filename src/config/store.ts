@@ -1,10 +1,11 @@
-import { ProductCategory } from '../types/store';
+import { CategoryDefinition, StoreSettings } from '../types/store';
 
 /**
  * TEKKIVO CENTRAL STORE SETTINGS
  * ------------------------------
- * Edit this file to update your business WhatsApp number, delivery fees,
- * and store details before deploying to Netlify.
+ * Edit this file to update your business WhatsApp number, default delivery fees,
+ * and store details. Delivery fees and categories can also be configured live
+ * by the store administrator inside the Admin Dashboard (#owner).
  */
 export const STORE_CONFIG = {
   brandName: 'TEKKIVO',
@@ -15,7 +16,7 @@ export const STORE_CONFIG = {
    * Format: Country code + mobile number without '+' or spaces.
    */
   ownerWhatsAppNumber: '923462796879',
-  supportEmail: 'orders@tekkivo.pk',
+  supportEmail: 'tekkivo.store@gmail.com',
   operatingHours: 'Mon – Sat · 10:00 AM – 8:00 PM PKT',
   currencyCode: 'PKR',
   currencyPrefix: 'Rs.',
@@ -32,47 +33,75 @@ export const STORE_CONFIG = {
 /** Convenience named export for the editable store owner WhatsApp number */
 export const OWNER_WHATSAPP_NUMBER = STORE_CONFIG.ownerWhatsAppNumber;
 
-export const PRODUCT_CATEGORIES: ReadonlyArray<{
-  name: ProductCategory;
-  nameUr: string;
-  shortDesc: string;
-}> = [
-  {
-    name: 'Kitchen Tools',
-    nameUr: 'کچن ٹولز',
-    shortDesc: 'Prep utensils, peelers, knives & countertop tools',
-  },
-  {
-    name: 'Kitchen Appliances',
-    nameUr: 'کچن اپلائنسز',
-    shortDesc: 'Compact kettles, blenders & daily kitchen tech',
-  },
-  {
-    name: 'Cookware & Bakeware',
-    nameUr: 'کک ویئر اور بیک ویئر',
-    shortDesc: 'Non-stick pans, trays & everyday cooking ware',
-  },
-  {
-    name: 'Home Essentials',
-    nameUr: 'ہوم اسینشلز',
-    shortDesc: 'Storage organizers, lamps & household utilities',
-  },
+export const PRODUCT_CATEGORIES: ReadonlyArray<CategoryDefinition> = [
   {
     name: 'Electronics & Gadgets',
     nameUr: 'الیکٹرانکس اور گیجٹس',
-    shortDesc: 'Smart home gear, chargers & everyday tech',
+    shortDesc: 'Wireless audio, smart lamps, gadgets & daily tech',
+  },
+  {
+    name: 'Kitchen Tools & Appliances',
+    nameUr: 'کچن ٹولز اور اپلائنسز',
+    shortDesc: 'Electric hot plates, prep utensils & kitchen appliances',
+  },
+  {
+    name: 'Home & Living',
+    nameUr: 'ہوم اور لیونگ',
+    shortDesc: 'Ambient lamps, room decor & everyday home organizers',
+  },
+  {
+    name: 'Beauty & Personal Care',
+    nameUr: 'بیوٹی اور پرسنل کیئر',
+    shortDesc: 'Skincare essentials, grooming tools & daily beauty care',
+  },
+  {
+    name: 'Fashion & Accessories',
+    nameUr: 'فیشن اور اسیسریز',
+    shortDesc: 'Watches, bags, sunglasses & everyday style accessories',
+  },
+  {
+    name: 'Baby & Kids',
+    nameUr: 'بے بی اور کڈز',
+    shortDesc: 'Safe baby care utilities, feeding gear & kids essentials',
   },
   {
     name: 'Mobile Accessories',
     nameUr: 'موبائل اسیسریز',
-    shortDesc: 'Cables, Type-C handsfree, stands & power gear',
+    shortDesc: 'Type-C handsfree, cables, stands & charging gear',
   },
   {
-    name: 'Audio & Headphones',
-    nameUr: 'آڈیو اور ہیڈفونز',
-    shortDesc: 'Wireless earbuds, ANC audio & Bluetooth headphones',
+    name: 'Grocery & Food Items',
+    nameUr: 'گروسری اور فوڈ آئٹمز',
+    shortDesc: 'Pantry staples, packaged snacks & dry food essentials',
+  },
+  {
+    name: 'Health & Personal Care',
+    nameUr: 'ہیلتھ اور پرسنل کیئر',
+    shortDesc: 'Wellness monitors, personal hygiene & everyday health',
+  },
+  {
+    name: 'Toys & Games',
+    nameUr: 'کھلونے اور گیمز',
+    shortDesc: 'Learning toys, family board games & creative play sets',
+  },
+  {
+    name: 'Sports & Outdoor',
+    nameUr: 'اسپورٹس اور آؤٹ ڈور',
+    shortDesc: 'Fitness gear, water bottles & outdoor travel equipment',
+  },
+  {
+    name: 'Cleaning & Household Essentials',
+    nameUr: 'صفائی اور گھریلو ضروریات',
+    shortDesc: 'Cleaning brushes, laundry tools & household upkeep items',
   },
 ];
+
+export const DEFAULT_STORE_SETTINGS: StoreSettings = {
+  standardDeliveryFeePkr: STORE_CONFIG.standardDeliveryFeePkr,
+  freeDeliveryThresholdPkr: STORE_CONFIG.freeDeliveryThresholdPkr,
+  estimatedDeliveryWindow: STORE_CONFIG.estimatedDeliveryWindow,
+  categories: PRODUCT_CATEGORIES.map((c) => ({ ...c })),
+};
 
 export const PAKISTAN_CITIES: ReadonlyArray<string> = [
   'Karachi',

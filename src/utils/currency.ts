@@ -24,11 +24,17 @@ export function getDiscountPercentage(
   return Math.round(((compareAtPrice - sellingPrice) / compareAtPrice) * 100);
 }
 
-export function calculateShippingFee(subtotalPkr: number): number {
+export function calculateShippingFee(
+  subtotalPkr: number,
+  deliveryConfig: {
+    standardDeliveryFeePkr: number;
+    freeDeliveryThresholdPkr: number;
+  } = STORE_CONFIG
+): number {
   if (subtotalPkr <= 0) return 0;
-  return subtotalPkr >= STORE_CONFIG.freeDeliveryThresholdPkr
+  return subtotalPkr >= deliveryConfig.freeDeliveryThresholdPkr
     ? 0
-    : STORE_CONFIG.standardDeliveryFeePkr;
+    : deliveryConfig.standardDeliveryFeePkr;
 }
 
 export function generateOrderReference(): string {

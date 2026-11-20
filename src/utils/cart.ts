@@ -114,7 +114,11 @@ export function removeCartItem(
 
 export function buildCartSummary(
   items: CartItem[],
-  products: Product[]
+  products: Product[],
+  deliveryConfig: {
+    standardDeliveryFeePkr: number;
+    freeDeliveryThresholdPkr: number;
+  } = STORE_CONFIG
 ): CartSummary {
   const detailedItems = items
     .map((ci): DetailedCartItem | null => {
@@ -141,16 +145,21 @@ export function buildCartSummary(
     (sum, item) => sum + item.lineTotalPkr,
     0
   );
-  const shippingFeePkr = calculateShippingFee(subtotalPkr);
+  const shippingFeePkr = calculateShippingFee(subtotalPkr, deliveryConfig);
   const totalPkr = subtotalPkr + shippingFeePkr;
   const remainingForFreeDeliveryPkr = Math.max(
     0,
-    STORE_CONFIG.freeDeliveryThresholdPkr - subtotalPkr
+    deliveryConfig.freeDeliveryThresholdPkr - subtotalPkr
   );
-  const freeProgressPct = Math.min(
-    100,
-    Math.round((subtotalPkr / STORE_CONFIG.freeDeliveryThresholdPkr) * 100)
-  );
+  const freeProgressPct =
+    deliveryConfig.freeDeliveryThresholdPkr <= 0
+      ? 100
+      : Math.min(
+          100,
+          Math.round(
+            (subtotalPkr / deliveryConfig.freeDeliveryThresholdPkr) * 100
+          )
+        );
 
   return {
     detailedItems,

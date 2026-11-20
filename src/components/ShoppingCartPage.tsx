@@ -8,8 +8,7 @@ import {
   Trash2,
   Truck,
 } from 'lucide-react';
-import { STORE_CONFIG } from '../config/store';
-import { CartItem, LanguageMode, Product } from '../types/store';
+import { CartItem, LanguageMode, Product, StoreSettings } from '../types/store';
 import { buildCartSummary } from '../utils/cart';
 import { formatPkr } from '../utils/currency';
 import { ResilientImage } from './ResilientImage';
@@ -18,6 +17,7 @@ interface ShoppingCartPageProps {
   language: LanguageMode;
   cartItems: CartItem[];
   products: Product[];
+  storeSettings: StoreSettings;
   onUpdateQuantity: (
     productId: string,
     nextQty: number,
@@ -34,6 +34,7 @@ export function ShoppingCartPage({
   language,
   cartItems,
   products,
+  storeSettings,
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
@@ -41,7 +42,7 @@ export function ShoppingCartPage({
   onProceedToCheckout,
   onInspectProduct,
 }: ShoppingCartPageProps) {
-  const summary = buildCartSummary(cartItems, products);
+  const summary = buildCartSummary(cartItems, products, storeSettings);
   const isEmpty = summary.detailedItems.length === 0;
 
   return (
@@ -279,7 +280,7 @@ export function ShoppingCartPage({
               <div className="flex items-start gap-2 text-xs text-slate-500 pt-1">
                 <ShieldCheck className="w-4 h-4 text-[#10243D] shrink-0 mt-0.5" />
                 <span>
-                  {STORE_CONFIG.estimatedDeliveryWindow}. Payment collected at
+                  {storeSettings.estimatedDeliveryWindow}. Payment collected at
                   your doorstep in PKR.
                 </span>
               </div>

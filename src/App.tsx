@@ -1,8 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+  type User,
+} from 'firebase/auth';
+import { MessageCircle } from 'lucide-react';
 import { CartDrawer } from './components/CartDrawer';
 import { CatalogSection, SortOption } from './components/CatalogSection';
 import { CategoryStrip } from './components/CategoryStrip';
 import { CheckoutPage } from './components/CheckoutPage';
+import { ContactSection } from './components/ContactSection';
 import { CustomerReviewsSection } from './components/CustomerReviewsSection';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
@@ -13,13 +21,16 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { SearchOverlay } from './components/SearchOverlay';
 import { ShoppingCartPage } from './components/ShoppingCartPage';
 import { SpecialOffersBanner } from './components/SpecialOffersBanner';
+import { TrackOrderModal } from './components/TrackOrderModal';
 import { WhyChooseTekkivo } from './components/WhyChooseTekkivo';
 import { WishlistDrawer } from './components/WishlistDrawer';
+import { DEFAULT_STORE_SETTINGS, STORE_CONFIG } from './config/store';
 import {
   DEFAULT_OWNER_CATALOG_META,
   OwnerProductCostMeta,
 } from './data/ownerCatalogMeta';
 import { DEFAULT_PRODUCTS } from './data/products';
+import { ADMIN_PRIMARY_EMAIL, auth, googleProvider } from './firebase';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import {
   CartItem,
@@ -27,6 +38,7 @@ import {
   OrderReceipt,
   Product,
   ProductCategory,
+  StoreSettings,
 } from './types/store';
 import {
   addCartItem,
@@ -35,6 +47,22 @@ import {
   removeCartItem,
   updateCartItemQuantity,
 } from './utils/cart';
+import { getWhatsAppUrl } from './utils/currency';
+import {
+  deleteOrderFromFirestore,
+  deleteProductFromFirestore,
+  saveOwnerMetaToFirestore,
+  saveProductToFirestore,
+  saveStoreSettingsToFirestore,
+  seedStarterCatalogIfMissing,
+  subscribeToAllProductsAdmin,
+  subscribeToOrdersAdmin,
+  subscribeToOwnerMetaAdmin,
+  subscribeToPublicProducts,
+  subscribeToStoreSettings,
+  updateOrderInFirestore,
+  updateProductInFirestore,
+} from './utils/firestoreService';
 
 type ActivePage = 'home' | 'cart' | 'checkout' | 'owner';
 
@@ -44,12 +72,15 @@ export default function App() {
     'en'
   );
   const [products, setProducts] = useLocalStorage<Product[]>(
-    'tekkivo_products_v8',
+    'tekkivo_products_v10',
     DEFAULT_PRODUCTS
   );
   const [ownerMetaMap, setOwnerMetaMap] = useLocalStorage<
     Record<string, OwnerProductCostMeta>
-  >('tekkivo_owner_meta_v4', DEFAULT_OWNER_CATALOG_META);
+  >('tekkivo_owner_meta_v5', DEFAULT_OWNER_CATALOG_META);
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(
+    DEFAULT_STORE_SETTINGS
+  );
 
   const [cartItems, setCartItems] = useLocalStorage<CartItem[]>(
     'tekkivo_cart_v2',
@@ -63,6 +94,22 @@ export default function App() {
     'tekkivo_demo_orders_v1',
     []
   );
+  const [cloudOrders, setCloudOrders] = useState<OrderReceipt[]>([]);
+
+  // Firebase Auth state
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState('');
+  const [cloudStatusText, setCloudStatusText] = useState(
+    'Connected to Cloud Firestore.'
+  );
+  const autoSeededRef = useRef(false);
+
+  const isAdmin = Boolean(
+    firebaseUser &&
+      firebaseUser.emailVerified &&
+      firebaseUser.email === ADMIN_PRIMARY_EMAIL
+  );
 
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const [selectedCategory, setSelectedCategory] = useState<
@@ -74,14 +121,96 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isTrackOrderOpen, setIsTrackOrderOpen] = useState(false);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Public Store Settings subscription
+  useEffect(() => {
+    const unsubSettings = subscribeToStoreSettings(
+      (nextSettings) => {
+        setStoreSettings(nextSettings);
+      },
+      () => {
+        // Keep default settings if offline
+      }
+    );
+    return () => unsubSettings();
+  }, []);
+
+  // Public vs Admin Products, Owner Meta, and Orders subscriptions
+  useEffect(() => {
+    if (!isAdmin) {
+      const unsubPublic = subscribeToPublicProducts(
+        (cloudProducts) => {
+          if (cloudProducts.length > 0) {
+            const newStarter = DEFAULT_PRODUCTS.find(
+              (p) => p.id === 'tkv-youngcome-60ml'
+            );
+            const needsInitialSync =
+              newStarter &&
+              cloudProducts.length === 7 &&
+              !cloudProducts.some((p) => p.id === 'tkv-youngcome-60ml');
+            setProducts(
+              needsInitialSync ? [...cloudProducts, newStarter] : cloudProducts
+            );
+          }
+        },
+        () => {
+          // Retain cached/starter products if offline
+        }
+      );
+      return () => unsubPublic();
+    }
+
+    if (!autoSeededRef.current) {
+      autoSeededRef.current = true;
+      void seedStarterCatalogIfMissing()
+        .then((seeded) => {
+          setCloudStatusText(
+            seeded > 0
+              ? `Synced ${seeded} starter product(s) into Cloud Firestore.`
+              : 'All products, categories, delivery fees, and orders are synced live.'
+          );
+        })
+        .catch(() => {
+          setCloudStatusText('Cloud Firestore active (local backup enabled).');
+        });
+    }
+
+    const unsubAdminProducts = subscribeToAllProductsAdmin((allProducts) => {
+      if (allProducts.length > 0) {
+        setProducts(allProducts);
+      }
+    });
+    const unsubMeta = subscribeToOwnerMetaAdmin((meta) => {
+      if (Object.keys(meta).length > 0) {
+        setOwnerMetaMap(meta);
+      }
+    });
+    const unsubOrders = subscribeToOrdersAdmin((ordersList) => {
+      setCloudOrders(ordersList);
+    });
+
+    return () => {
+      unsubAdminProducts();
+      unsubMeta();
+      unsubOrders();
+    };
+  }, [isAdmin, setOwnerMetaMap, setProducts]);
 
   const publishedProducts = products.filter(isProductPublished);
 
-  const activeProduct =
-    activeProductId
-      ? publishedProducts.find((p) => p.id === activeProductId) || null
-      : null;
+  const activeProduct = activeProductId
+    ? publishedProducts.find((p) => p.id === activeProductId) || null
+    : null;
 
   const setHashSafely = (hash: string) => {
     try {
@@ -116,6 +245,24 @@ export default function App() {
     return () => window.removeEventListener('hashchange', syncFromHash);
   }, []);
 
+  const handleSignInWithGoogle = async () => {
+    setAuthError('');
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      setAuthError(
+        err instanceof Error
+          ? err.message
+          : 'Google sign-in popup was cancelled or blocked.'
+      );
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    setCloudOrders([]);
+  };
+
   const openProductDetail = (product: Product) => {
     setActiveProductId(product.id);
     setHashSafely(`#product=${product.id}`);
@@ -140,6 +287,7 @@ export default function App() {
     setActivePage(page);
     setIsCartOpen(false);
     setIsWishlistOpen(false);
+    setIsTrackOrderOpen(false);
     setActiveProductId(null);
     if (page === 'cart') {
       setHashSafely('#cart');
@@ -244,26 +392,37 @@ export default function App() {
     setDemoOrders((prev) => [order, ...prev]);
   };
 
-  const handleUpdateDemoOrder = (
+  const handleUpdateOrder = (
     orderRef: string,
     patch: Partial<
       Pick<OrderReceipt, 'status' | 'hhcFulfillmentRef' | 'ownerNotes'>
     >
   ) => {
+    setCloudOrders((prev) =>
+      prev.map((order) =>
+        order.orderRef === orderRef ? { ...order, ...patch } : order
+      )
+    );
     setDemoOrders((prev) =>
       prev.map((order) =>
         order.orderRef === orderRef ? { ...order, ...patch } : order
       )
     );
+    if (isAdmin) {
+      void updateOrderInFirestore(orderRef, patch).catch(() => {});
+    }
   };
 
-  const handleDeleteDemoOrder = (orderRef: string) => {
-    setDemoOrders((prev) =>
-      prev.filter((order) => order.orderRef !== orderRef)
-    );
+  const handleDeleteOrder = (orderRef: string) => {
+    setCloudOrders((prev) => prev.filter((o) => o.orderRef !== orderRef));
+    setDemoOrders((prev) => prev.filter((o) => o.orderRef !== orderRef));
+    if (isAdmin) {
+      void deleteOrderFromFirestore(orderRef).catch(() => {});
+    }
   };
 
   const handleUpdateProduct = (productId: string, patch: Partial<Product>) => {
+    let mergedProduct: Product | null = null;
     setProducts((prev) =>
       prev.map((p) => {
         if (p.id !== productId) return p;
@@ -271,9 +430,13 @@ export default function App() {
         if (next.sellingPricePkr <= 0) {
           next.isPublished = false;
         }
+        mergedProduct = next;
         return next;
       })
     );
+    if (isAdmin && mergedProduct) {
+      void updateProductInFirestore(productId, mergedProduct).catch(() => {});
+    }
   };
 
   const handleAddProduct = (
@@ -282,41 +445,80 @@ export default function App() {
   ) => {
     setProducts((prev) => [...prev, product]);
     setOwnerMetaMap((prev) => ({ ...prev, [product.id]: supplierMeta }));
+    if (isAdmin) {
+      void saveProductToFirestore(product, supplierMeta).catch(() => {});
+    }
   };
 
   const handleDeleteProduct = (productId: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== productId));
     setCartItems((prev) => prev.filter((c) => c.productId !== productId));
+    if (isAdmin) {
+      void deleteProductFromFirestore(productId).catch(() => {});
+    }
   };
 
   const handleResetCatalog = () => {
     setProducts(DEFAULT_PRODUCTS);
     setOwnerMetaMap(DEFAULT_OWNER_CATALOG_META);
+    if (isAdmin) {
+      void Promise.all(
+        DEFAULT_PRODUCTS.map((prod) =>
+          saveProductToFirestore(prod, DEFAULT_OWNER_CATALOG_META[prod.id])
+        )
+      ).catch(() => {});
+    }
   };
 
   const handleUpdateSupplierMeta = (
     productId: string,
     patch: Partial<OwnerProductCostMeta>
   ) => {
+    const existing = ownerMetaMap[productId] || {
+      productId,
+      supplierProductId: 'MANUAL',
+      supplierCostPkr: 0,
+      listedStock: 0,
+    };
+    const merged: OwnerProductCostMeta = { ...existing, ...patch };
     setOwnerMetaMap((prev) => ({
       ...prev,
-      [productId]: {
-        ...(prev[productId] || {
-          productId,
-          supplierProductId: 'MANUAL',
-          supplierCostPkr: 0,
-          listedStock: 0,
-        }),
-        ...patch,
-      },
+      [productId]: merged,
     }));
+    if (isAdmin) {
+      void saveOwnerMetaToFirestore(merged).catch(() => {});
+    }
+  };
+
+  const handleUpdateStoreSettings = (next: StoreSettings) => {
+    setStoreSettings(next);
+    if (isAdmin) {
+      void saveStoreSettingsToFirestore(next).catch(() => {});
+    }
   };
 
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const adminOrders = isAdmin && cloudOrders.length > 0 ? cloudOrders : demoOrders;
+  const floatingWhatsAppUrl = getWhatsAppUrl(
+    STORE_CONFIG.ownerWhatsAppNumber,
+    'Assalam-o-Alaikum TEKKIVO, I would like assistance with shopping or Cash on Delivery.'
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#10243D]">
       <Header
+        language={language}
+        onToggleLanguage={setLanguage}
+        searchQuery={searchQuery}
+        onSearchSubmit={(query) => {
+          setSearchQuery(query);
+          setSelectedCategory('All');
+          scrollToSection('catalog');
+        }}
+        categories={storeSettings.categories}
+        selectedCategory={selectedCategory}
+        onSelectCategory={handleSelectCategory}
+        freeDeliveryThresholdPkr={storeSettings.freeDeliveryThresholdPkr}
         cartCount={totalCartCount}
         wishlistCount={wishlistIds.length}
         onOpenSearch={() => setIsSearchOpen(true)}
@@ -328,6 +530,8 @@ export default function App() {
             setIsCartOpen(true);
           }
         }}
+        onOpenTrackOrder={() => setIsTrackOrderOpen(true)}
+        onOpenOwnerPortal={() => navigateToPage('owner')}
         onNavigateSection={scrollToSection}
       />
 
@@ -337,6 +541,7 @@ export default function App() {
             language={language}
             cartItems={cartItems}
             products={products}
+            storeSettings={storeSettings}
             onUpdateQuantity={handleUpdateCartQuantity}
             onRemoveItem={handleRemoveFromCart}
             onClearCart={handleClearCart}
@@ -353,6 +558,7 @@ export default function App() {
             language={language}
             cartItems={cartItems}
             products={products}
+            storeSettings={storeSettings}
             onBackToCart={() => navigateToPage('cart')}
             onContinueShopping={() => navigateToPage('home')}
             onSaveDemoOrder={handleSaveDemoOrder}
@@ -361,34 +567,39 @@ export default function App() {
           />
         ) : activePage === 'owner' ? (
           <OwnerPortalPage
-            orders={demoOrders}
+            user={firebaseUser}
+            isAdmin={isAdmin}
+            authLoading={authLoading}
+            authError={authError}
+            onSignInWithGoogle={handleSignInWithGoogle}
+            onSignOut={handleSignOut}
+            orders={adminOrders}
             products={products}
             ownerMetaMap={ownerMetaMap}
-            onUpdateOrder={handleUpdateDemoOrder}
-            onDeleteOrder={handleDeleteDemoOrder}
+            storeSettings={storeSettings}
+            cloudStatusText={cloudStatusText}
+            onSeedStarterCatalog={seedStarterCatalogIfMissing}
+            onUpdateOrder={handleUpdateOrder}
+            onDeleteOrder={handleDeleteOrder}
             onUpdateProduct={handleUpdateProduct}
             onAddProduct={handleAddProduct}
             onDeleteProduct={handleDeleteProduct}
             onResetCatalog={handleResetCatalog}
             onUpdateSupplierMeta={handleUpdateSupplierMeta}
+            onUpdateStoreSettings={handleUpdateStoreSettings}
             onBackToStore={() => navigateToPage('home')}
           />
         ) : (
           <>
             <HeroBanner
               language={language}
-              onToggleLanguage={setLanguage}
               onShopCollection={() => scrollToSection('catalog')}
               onBrowseCategories={() => scrollToSection('categories')}
-              onSearchSubmit={(query) => {
-                setSearchQuery(query);
-                setSelectedCategory('All');
-                scrollToSection('catalog');
-              }}
             />
 
             <CategoryStrip
               language={language}
+              categories={storeSettings.categories}
               products={publishedProducts}
               selectedCategory={selectedCategory}
               onSelectCategory={handleSelectCategory}
@@ -397,6 +608,7 @@ export default function App() {
             <CatalogSection
               language={language}
               products={publishedProducts}
+              categories={storeSettings.categories}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               selectedCategory={selectedCategory}
@@ -411,6 +623,8 @@ export default function App() {
 
             <SpecialOffersBanner
               language={language}
+              standardDeliveryFeePkr={storeSettings.standardDeliveryFeePkr}
+              freeDeliveryThresholdPkr={storeSettings.freeDeliveryThresholdPkr}
               onViewOffers={() => {
                 setSelectedCategory('All');
                 setSortBy('available');
@@ -422,16 +636,36 @@ export default function App() {
 
             <CustomerReviewsSection language={language} />
 
+            <ContactSection language={language} />
+
             <NewsletterSection language={language} />
           </>
         )}
       </main>
 
       <Footer
+        categories={storeSettings.categories}
+        storeSettings={storeSettings}
         onSelectCategory={handleSelectCategory}
         onOpenOwnerPortal={() => navigateToPage('owner')}
         onOpenCart={() => navigateToPage('cart')}
+        onOpenTrackOrder={() => setIsTrackOrderOpen(true)}
+        onNavigateContact={() => scrollToSection('contact')}
       />
+
+      {/* Floating WhatsApp Contact CTA */}
+      {activePage !== 'owner' && (
+        <a
+          href={floatingWhatsAppUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Chat with TEKKIVO on WhatsApp"
+          className="fixed bottom-5 right-5 z-30 h-12 px-4 rounded-full bg-[#10243D] hover:bg-[#183558] text-white shadow-lg border border-white/15 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold transition-transform hover:scale-[1.03]"
+        >
+          <MessageCircle className="w-5 h-5 text-[#F47721]" />
+          <span className="hidden sm:inline">WhatsApp Us</span>
+        </a>
+      )}
 
       {/* Interactive Drawers & Modals */}
       <SearchOverlay
@@ -449,6 +683,7 @@ export default function App() {
       <ProductDetailModal
         product={activeProduct}
         language={language}
+        storeSettings={storeSettings}
         isWishlisted={
           activeProduct ? wishlistIds.includes(activeProduct.id) : false
         }
@@ -462,6 +697,7 @@ export default function App() {
         isOpen={isCartOpen}
         cartItems={cartItems}
         products={products}
+        storeSettings={storeSettings}
         onClose={() => setIsCartOpen(false)}
         onUpdateQuantity={handleUpdateCartQuantity}
         onRemoveItem={handleRemoveFromCart}
@@ -481,6 +717,12 @@ export default function App() {
         onRemoveFromWishlist={handleToggleWishlist}
         onMoveToCart={handleMoveWishlistToCart}
         onOpenProduct={openProductDetail}
+      />
+
+      <TrackOrderModal
+        isOpen={isTrackOrderOpen}
+        orders={adminOrders}
+        onClose={() => setIsTrackOrderOpen(false)}
       />
     </div>
   );

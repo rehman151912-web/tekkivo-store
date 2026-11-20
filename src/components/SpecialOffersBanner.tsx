@@ -1,21 +1,26 @@
 import { ArrowRight } from 'lucide-react';
 import { COPY } from '../data/translations';
 import { LanguageMode } from '../types/store';
+import { formatPkr } from '../utils/currency';
 import { ResilientImage } from './ResilientImage';
 
 interface SpecialOffersBannerProps {
   language: LanguageMode;
+  standardDeliveryFeePkr: number;
+  freeDeliveryThresholdPkr: number;
   onViewOffers: () => void;
 }
 
 export function SpecialOffersBanner({
   language,
+  standardDeliveryFeePkr,
+  freeDeliveryThresholdPkr,
   onViewOffers,
 }: SpecialOffersBannerProps) {
   const copy = COPY[language];
 
   return (
-    <section id="offers" className="py-14 sm:py-16 bg-white">
+    <section id="offers" className="py-12 sm:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl bg-[#10243D] text-white overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch">
           <div className="lg:col-span-6 p-7 sm:p-10 lg:p-12 flex flex-col justify-center">
@@ -26,7 +31,13 @@ export function SpecialOffersBanner({
               className="mt-2 font-display text-2xl sm:text-4xl font-bold text-white leading-tight tracking-wide"
               style={{ textWrap: 'balance' }}
             >
-              {copy.specialOfferTitle}
+              {language === 'en'
+                ? freeDeliveryThresholdPkr > 0
+                  ? `Free Cash on Delivery Across Pakistan Above ${formatPkr(
+                      freeDeliveryThresholdPkr
+                    )}`
+                  : 'Free Cash on Delivery Across Pakistan on All Orders'
+                : copy.specialOfferTitle}
             </h2>
             <p
               className={`mt-4 text-sm sm:text-base text-slate-300 leading-relaxed max-w-lg ${
@@ -34,7 +45,11 @@ export function SpecialOffersBanner({
               }`}
               dir={language === 'ur' ? 'rtl' : 'ltr'}
             >
-              {copy.specialOfferDesc}
+              {language === 'en'
+                ? `Combine electronics, kitchen appliances, beauty, and home essentials in one order to waive the ${formatPkr(
+                    standardDeliveryFeePkr
+                  )} standard courier delivery fee.`
+                : copy.specialOfferDesc}
             </p>
             <div className="mt-7">
               <button

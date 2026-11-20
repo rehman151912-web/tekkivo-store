@@ -45,20 +45,20 @@ export const COPY: Record<LanguageMode, StoreCopy> = {
       'Cash on Delivery across Pakistan · Free delivery on Rs. 5,000+ · WhatsApp order confirmation',
     shopByCategoryTitle: 'Shop by Category',
     shopByCategorySubtitle:
-      'Seven dedicated departments across kitchen, home essentials, mobile accessories, and wireless audio.',
+      'Twelve general store departments across electronics, kitchen, home, beauty, fashion, baby & kids, grocery, health, toys, sports, and household essentials.',
     featuredTitle: 'Featured Products',
     featuredSubtitle:
-      'Current supplier-listed audio and mobile items with transparent availability status.',
+      'Current supplier-listed electronics, home & kitchen items with transparent availability status.',
     bestSellersTitle: 'Product Catalog & Best Sellers',
     bestSellersSubtitle:
       'Search products, filter by category, and verify stock status before ordering via Cash on Delivery.',
     newArrivalsTitle: 'New Arrivals',
     newArrivalsSubtitle:
-      'Recently listed wireless earbuds and audio accessories available for WhatsApp stock confirmation.',
+      'Recently listed appliances, lighting, and wireless audio gear available for WhatsApp stock confirmation.',
     specialOfferKicker: 'Nationwide COD Advantage',
     specialOfferTitle: 'Free Cash on Delivery Across Pakistan Above Rs. 5,000',
     specialOfferDesc:
-      'Combine electronics, audio gear, and everyday home essentials in one order to waive the Rs. 250 standard courier delivery fee.',
+      'Combine electronics, kitchen appliances, and everyday home essentials in one order to waive the courier delivery fee.',
     specialOfferCta: 'Browse Available Items',
     whyChooseTitle: 'Why Shop with TEKKIVO',
     whyChooseSubtitle:
@@ -66,9 +66,9 @@ export const COPY: Record<LanguageMode, StoreCopy> = {
     reviewsTitle: 'Customer Feedback Layout',
     reviewsSubtitle:
       'Sample review layout templates only. Verified buyer reviews will be published here once live orders are delivered.',
-    newsletterTitle: 'Restock & New Category Alerts',
+    newsletterTitle: 'Stay in the Loop',
     newsletterSubtitle:
-      'Get notified when Kitchen Tools, Home Essentials, and new HHC listings go live.',
+      'Subscribe for Restock Alerts and updates when new products across all 12 categories go live.',
     addToCart: 'Add to Cart',
     addedToCart: 'Added',
     outOfStock: 'Out of Stock',
@@ -78,17 +78,17 @@ export const COPY: Record<LanguageMode, StoreCopy> = {
       'Clicking PLACE ORDER opens WhatsApp so you can send your prefilled order summary for stock verification.',
   },
   ur: {
-    heroKicker: 'پاکستان بھر میں کیش آن ڈیلیوری · کچن، ہوم اور الیکٹرانکس',
+    heroKicker: 'پاکستان بھر میں کیش آن ڈیلیوری · آن لائن جنرل اسٹور',
     heroTitle: 'Smart Choice. Better Life.',
     heroSubtitle:
-      'کچن ٹولز، گھریلو ضروریات، الیکٹرانکس، موبائل اسیسریز اور آڈیو گیجٹس پاکستانی روپے میں واضح قیمتوں اور کیش آن ڈیلیوری سہولت کے ساتھ خریدیں۔',
+      'الیکٹرانکس، کچن ٹولز، گھریلو ضروریات، بیوٹی، فیشن، بے بی کیئر، گروسری اور روزمرہ مصنوعات پاکستانی روپے میں واضح قیمتوں اور کیش آن ڈیلیوری کے ساتھ خریدیں۔',
     shopCollection: 'مصنوعات دیکھیں',
     exploreCategories: 'کیٹیگریز دیکھیں',
     heroTrustNote:
-      'پاکستان بھر میں کیش آن ڈیلیوری · 5,000 روپے سے زائد پر مفت ڈیلیوری · واٹس ایپ تصدیق',
+      'پاکستان بھر میں کیش آن ڈیلیوری · مقررہ حد سے زائد آرڈر پر مفت ڈیلیوری · واٹس ایپ تصدیق',
     shopByCategoryTitle: 'کیٹیگری کے مطابق خریداری',
     shopByCategorySubtitle:
-      'کچن، گھر، موبائل اسیسریز اور وائرلیس آڈیو کے لیے سات منتخب کیٹیگریز۔',
+      'الیکٹرانکس، کچن، گھر، بیوٹی، فیشن، بچوں کی اشیاء، گروسری، ہیلتھ، کھلونے اور اسپورٹس سمیت بارہ کیٹیگریز۔',
     featuredTitle: 'نمایاں مصنوعات',
     featuredSubtitle:
       'واضح دستیابی اور قیمتوں کے ساتھ منتخب آڈیو اور موبائل مصنوعات۔',

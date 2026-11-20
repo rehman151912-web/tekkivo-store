@@ -17,6 +17,7 @@ import {
   LanguageMode,
   OrderReceipt,
   Product,
+  StoreSettings,
 } from '../types/store';
 import { buildCartSummary } from '../utils/cart';
 import {
@@ -27,6 +28,7 @@ import {
   getWhatsAppUrl,
   launchWhatsAppHandoff,
 } from '../utils/currency';
+import { saveOrderToFirestore } from '../utils/firestoreService';
 import {
   CheckoutFieldName,
   validateCheckoutForm,
@@ -37,6 +39,7 @@ interface CheckoutPageProps {
   language: LanguageMode;
   cartItems: CartItem[];
   products: Product[];
+  storeSettings: StoreSettings;
   onBackToCart: () => void;
   onContinueShopping: () => void;
   onSaveDemoOrder: (order: OrderReceipt) => void;
@@ -54,6 +57,7 @@ export function CheckoutPage({
   language,
   cartItems,
   products,
+  storeSettings,
   onBackToCart,
   onContinueShopping,
   onSaveDemoOrder,
@@ -73,7 +77,7 @@ export function CheckoutPage({
   const [copied, setCopied] = useState(false);
 
   const copy = COPY[language];
-  const summary = buildCartSummary(cartItems, products);
+  const summary = buildCartSummary(cartItems, products, storeSettings);
 
   const handlePlaceOrder = (e: FormEvent) => {
     e.preventDefault();
@@ -136,8 +140,11 @@ export function CheckoutPage({
       whatsappMessage
     );
 
-    // Save locally for demo inspection ONLY with status 'pending'
+    // Save order locally and persist to Cloud Firestore with initial status 'pending'
     onSaveDemoOrder(fullReceipt);
+    void saveOrderToFirestore(fullReceipt).catch(() => {
+      // Order summary remains accessible locally & via WhatsApp handoff if offline
+    });
 
     // Open official wa.me link with URL-encoded order message
     const launched = launchWhatsAppHandoff(whatsappUrl);
@@ -210,16 +217,15 @@ export function CheckoutPage({
                   in WhatsApp.
                 </strong>
               </p>
-              <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                Demo Storage Notice: A copy of this order (
-                <span className="font-mono">{handoff.receipt.orderRef}</span>)
-                was saved in your browser&apos;s{' '}
-                <code className="font-mono">localStorage</code> for
-                demonstration purposes only.{' '}
-                <strong>
-                  localStorage is not a secure central order database
-                </strong>{' '}
-                — only messages sent to our WhatsApp reach our team.
+              <p className="mt-2 text-xs sm:text-sm font-medium text-[#10243D] leading-relaxed">
+                A confirmation will be sent via WhatsApp. For help, email{' '}
+                <a
+                  href={`mailto:${STORE_CONFIG.supportEmail}`}
+                  className="text-[#F47721] font-semibold underline underline-offset-2"
+                >
+                  {STORE_CONFIG.supportEmail}
+                </a>
+                .
               </p>
             </div>
           </div>

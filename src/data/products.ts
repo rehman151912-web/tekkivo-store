@@ -18,7 +18,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     sku: 'TKV-AUD-01',
     title: 'T-Tech Wireless Earbuds',
     titleUr: 'ٹی ٹیک وائرلیس ایئربڈز',
-    category: 'Audio & Headphones',
+    category: 'Electronics & Gadgets',
     sellingPricePkr: 1499,
     stock: 2,
     stockConfirmationStatus: 'pending_confirmation',
@@ -27,6 +27,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     isFeatured: true,
     isBestSeller: true,
     isNewArrival: false,
+    isTrending: true,
     shortSpec:
       'LED Digital Display · Smart Touch Control · HD Sound · Type-C Charging Case · Without Box',
     description:
@@ -50,7 +51,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     sku: 'TKV-AUD-02',
     title: 'P9 Wireless Bluetooth Headphones',
     titleUr: 'P9 وائرلیس بلوٹوتھ ہیڈفونز',
-    category: 'Audio & Headphones',
+    category: 'Electronics & Gadgets',
     sellingPricePkr: 1499,
     stock: 2,
     stockConfirmationStatus: 'pending_confirmation',
@@ -58,6 +59,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     isFeatured: true,
     isBestSeller: true,
     isNewArrival: false,
+    isTrending: false,
     shortSpec:
       'Wireless Bluetooth Headphones · Premium ABS Plastic · Black, Blue, Green, Red & Silver',
     description:
@@ -90,6 +92,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     isFeatured: false,
     isBestSeller: false,
     isNewArrival: false,
+    isTrending: false,
     shortSpec: 'Type-C Handsfree · Currently Out of Stock (Supplier Reported)',
     description:
       'Gionee Type-C Handsfree. Currently unavailable because the supplier has reported this item out of stock. Ordering remains disabled until supplier restock is reconfirmed.',
@@ -116,7 +119,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     sku: 'TKV-AUD-04',
     title: 'U39 True Wireless Bluetooth Earbuds',
     titleUr: 'U39 ٹرو وائرلیس بلوٹوتھ ایئربڈز',
-    category: 'Audio & Headphones',
+    category: 'Electronics & Gadgets',
     sellingPricePkr: 1599,
     stock: 2,
     stockConfirmationStatus: 'pending_confirmation',
@@ -124,6 +127,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     isFeatured: true,
     isBestSeller: false,
     isNewArrival: true,
+    isTrending: false,
     shortSpec:
       'Magnetic Suction Design · Bluetooth 5.3 · IPX4 · Touch Control · Type-C Charging',
     description:
@@ -147,7 +151,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     sku: 'TKV-AUD-05',
     title: 'Google Pixel Buds Pro Wireless Earbuds (ANC)',
     titleUr: 'گوگل پکسل بڈز پرو وائرلیس ایئربڈز (ANC)',
-    category: 'Audio & Headphones',
+    category: 'Electronics & Gadgets',
     sellingPricePkr: 1799,
     stock: 2,
     stockConfirmationStatus: 'pending_confirmation',
@@ -156,6 +160,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     isFeatured: true,
     isBestSeller: true,
     isNewArrival: true,
+    isTrending: true,
     shortSpec:
       'Active Noise Cancellation (ANC) · Unverified Brand Authenticity',
     description:
@@ -186,7 +191,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
       'RAF Electric Stove | 1000W Hot Plate | Heats in 2 Mins | Automatic & Easy to Clean',
     titleUr:
       'آر اے ایف (RAF) الیکٹرک چولہا R.8010B | 1000 واٹ ہاٹ پلیٹ',
-    category: 'Kitchen Appliances',
+    category: 'Kitchen Tools & Appliances',
     sellingPricePkr: 2029,
     isPublished: true,
     stock: 2,
@@ -196,6 +201,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     isFeatured: false,
     isBestSeller: false,
     isNewArrival: true,
+    isTrending: true,
     shortSpec:
       'RAF R.8010B · 1000W Single Hot Plate · Heats in 2 Mins · Adjustable Heat Control · Uniform Heating · 0.3 kg',
     description:
@@ -229,7 +235,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
       'USB Ceiling Moon Earth Projection Atmosphere Light Starry Sky Lamp – 6 Lenses',
     titleUr:
       'یو ایس بی سیلنگ مون ارتھ پروجیکشن اسٹاری اسکائی لیمپ – 6 لینز',
-    category: 'Home Essentials',
+    category: 'Home & Living',
     sellingPricePkr: 1010,
     isPublished: true,
     stock: 945,
@@ -239,6 +245,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     isFeatured: true,
     isBestSeller: false,
     isNewArrival: true,
+    isTrending: true,
     shortSpec:
       '6 Replaceable Lenses (Moon, Earth, Mars, Jupiter, Saturn, Starry Nebula) · 360° Rotating USB Lamp · Flexible Cable · Plug & Play',
     description:
@@ -274,6 +281,46 @@ export const DEFAULT_PRODUCTS: Product[] = [
       '/assets/aistudio/2026_09_15_8d60c5097981457c8a749953922d7f62_715bd886.jpeg',
       '/assets/aistudio/2026_09_15_59dbe947ae42c7de59eea8ea798bcc3f_c510a95f.jpeg',
       '/assets/aistudio/2026_09_15_a0868b37d9e893d3c6fb991dfe4829a0_6dbba4d2.jpeg',
+    ],
+    isDemoData: true,
+  },
+  {
+    id: 'tkv-youngcome-60ml',
+    sku: 'TKV-BTY-08',
+    title: 'Youngcome Face & Body Whitening Lotion 60ml',
+    titleUr: 'ینگ کم فیس اینڈ باڈی وائٹننگ لوشن 60 ملی لیٹر',
+    category: 'Beauty & Personal Care',
+    sellingPricePkr: 600,
+    isPublished: true,
+    stock: 2,
+    stockConfirmationStatus: 'pending_confirmation',
+    conditionNote:
+      'Stock display: 2 units · Availability subject to confirmation prior to Cash on Delivery dispatch.',
+    isFeatured: true,
+    isBestSeller: false,
+    isNewArrival: true,
+    isTrending: false,
+    shortSpec:
+      '60ml · Collagen & Milk Formula · Face & Body Moisturizing Lotion for Uneven Skin Tone & Dark Spots',
+    description:
+      'Face and body moisturizing lotion with collagen and milk formula, marketed for uneven skin tone and dark spots.',
+    descriptionUr:
+      'کولیجن اور ملک فارمولے پر مشتمل فیس اینڈ باڈی موئسچرائزنگ لوشن (60 ملی لیٹر)، جو غیر ہموار اسکن ٹون اور ڈارک اسپاٹس کے لیے تیار کیا گیا ہے۔',
+    specs: [
+      { label: 'Brand', value: 'YOUNGCOME' },
+      { label: 'Volume', value: '60ml' },
+      { label: 'Formula', value: 'Collagen & Milk' },
+      { label: 'Application', value: 'Face & Body' },
+      { label: 'Marketed For', value: 'Uneven Skin Tone & Dark Spots' },
+      { label: 'Payment', value: 'Cash on Delivery (Pakistan)' },
+    ],
+    image:
+      '/assets/aistudio/2026_09_21_5ba51237c3c64bfc2cec0d1d3d34f0e9_af456f38.png',
+    imageAlt:
+      'Youngcome Face & Body Whitening Lotion 60ml with Collagen & Milk formula',
+    galleryImages: [
+      '/assets/aistudio/2026_09_21_5ba51237c3c64bfc2cec0d1d3d34f0e9_af456f38.png',
+      '/assets/aistudio/2026_09_21_44fa38b2d10a99c42e9cb9b62c45152a_2ab3088b.png',
     ],
     isDemoData: true,
   },

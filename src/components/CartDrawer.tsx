@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
-import { CartItem, Product } from '../types/store';
+import { CartItem, Product, StoreSettings } from '../types/store';
 import { buildCartSummary } from '../utils/cart';
 import { formatPkr } from '../utils/currency';
 import { ResilientImage } from './ResilientImage';
@@ -9,6 +9,7 @@ interface CartDrawerProps {
   isOpen: boolean;
   cartItems: CartItem[];
   products: Product[];
+  storeSettings: StoreSettings;
   onClose: () => void;
   onUpdateQuantity: (
     productId: string,
@@ -24,6 +25,7 @@ export function CartDrawer({
   isOpen,
   cartItems,
   products,
+  storeSettings,
   onClose,
   onUpdateQuantity,
   onRemoveItem,
@@ -41,7 +43,7 @@ export function CartDrawer({
 
   if (!isOpen) return null;
 
-  const summary = buildCartSummary(cartItems, products);
+  const summary = buildCartSummary(cartItems, products, storeSettings);
 
   return (
     <div

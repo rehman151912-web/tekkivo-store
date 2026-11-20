@@ -1,0 +1,183 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Customer-facing product catalog item (excludes supplier costs and commissions).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 2, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sku": { "type": "string", "minLength": 2, "maxLength": 64 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "titleUr": { "type": "string", "maxLength": 300 },
+        "category": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "sellingPricePkr": { "type": "number" },
+        "compareAtPricePkr": { "type": "number" },
+        "stock": { "type": "number" },
+        "stockConfirmationStatus": {
+          "type": "string",
+          "enum": ["confirmed", "pending_confirmation", "out_of_stock"]
+        },
+        "availableColors": { "type": "array" },
+        "conditionNote": { "type": "string", "maxLength": 400 },
+        "isFeatured": { "type": "boolean" },
+        "isBestSeller": { "type": "boolean" },
+        "isNewArrival": { "type": "boolean" },
+        "isTrending": { "type": "boolean" },
+        "shortSpec": { "type": "string", "maxLength": 400 },
+        "description": { "type": "string", "maxLength": 4000 },
+        "descriptionUr": { "type": "string", "maxLength": 4000 },
+        "specs": { "type": "array" },
+        "image": { "type": "string", "maxLength": 150000 },
+        "imageAlt": { "type": "string", "maxLength": 300 },
+        "galleryImages": { "type": "array" },
+        "isPublished": { "type": "boolean" },
+        "isDemoData": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "sku",
+        "title",
+        "titleUr",
+        "category",
+        "sellingPricePkr",
+        "stock",
+        "stockConfirmationStatus",
+        "shortSpec",
+        "description",
+        "descriptionUr",
+        "specs",
+        "image",
+        "imageAlt",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OwnerProductCostMeta": {
+      "title": "OwnerProductCostMeta",
+      "description": "Admin-only supplier cost, supplier ID, and stock verification metadata.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string", "minLength": 2, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "supplierProductId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "supplierName": { "type": "string", "maxLength": 120 },
+        "supplierCostPkr": { "type": "number" },
+        "listedStock": { "type": "number" },
+        "dispatchLocation": { "type": "string", "maxLength": 120 },
+        "inspectionStatus": { "type": "string", "maxLength": 120 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "productId",
+        "supplierProductId",
+        "supplierCostPkr",
+        "listedStock",
+        "updatedAt"
+      ]
+    },
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "Configurable Pakistan delivery charges and store categories.",
+      "type": "object",
+      "properties": {
+        "standardDeliveryFeePkr": { "type": "number" },
+        "freeDeliveryThresholdPkr": { "type": "number" },
+        "estimatedDeliveryWindow": { "type": "string", "minLength": 3, "maxLength": 160 },
+        "categories": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "standardDeliveryFeePkr",
+        "freeDeliveryThresholdPkr",
+        "estimatedDeliveryWindow",
+        "categories",
+        "updatedAt"
+      ]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer Cash on Delivery (COD) order submitted at checkout.",
+      "type": "object",
+      "properties": {
+        "orderRef": { "type": "string", "minLength": 6, "maxLength": 64, "pattern": "^TKV-[0-9]{6}-[0-9]{6}$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "submitted", "processing", "shipped", "delivered", "cancelled"]
+        },
+        "hhcFulfillmentRef": { "type": "string", "maxLength": 120 },
+        "ownerNotes": { "type": "string", "maxLength": 1000 },
+        "customer": { "type": "object" },
+        "items": { "type": "array" },
+        "subtotalPkr": { "type": "number" },
+        "shippingFeePkr": { "type": "number" },
+        "totalPkr": { "type": "number" },
+        "whatsappMessage": { "type": "string", "minLength": 10, "maxLength": 8000 }
+      },
+      "required": [
+        "orderRef",
+        "createdAt",
+        "updatedAt",
+        "status",
+        "hhcFulfillmentRef",
+        "customer",
+        "items",
+        "subtotalPkr",
+        "shippingFeePkr",
+        "totalPkr",
+        "whatsappMessage"
+      ]
+    },
+    "Subscriber": {
+      "title": "Subscriber",
+      "description": "Customer email subscription for newsletter or restock alerts.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "minLength": 5, "maxLength": 160, "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$" },
+        "source": { "type": "string", "enum": ["newsletter", "restock_alert"] },
+        "productId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "source", "createdAt"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized TEKKIVO store administrator profile.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "minLength": 5, "maxLength": 160 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Published customer-facing TEKKIVO product catalog."
+    },
+    "/owner_catalog_meta/{productId}": {
+      "schema": { "$ref": "#/entities/OwnerProductCostMeta" },
+      "description": "Private admin-only supplier cost and ID metadata."
+    },
+    "/store_settings/{settingId}": {
+      "schema": { "$ref": "#/entities/StoreSettings" },
+      "description": "Configurable COD delivery charges and store categories (document id: main)."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer COD orders with PII protected exclusively for verified admins."
+    },
+    "/subscribers/{subscriberId}": {
+      "schema": { "$ref": "#/entities/Subscriber" },
+      "description": "Newsletter and restock alert email signups protected exclusively for admins."
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Registered admin user UIDs."
+    }
+  }
+}

@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import {
   AlertCircle,
+  Bell,
   Check,
+  CheckCircle2,
   Heart,
   Minus,
   Plus,
@@ -10,16 +12,18 @@ import {
   Truck,
   X,
 } from 'lucide-react';
-import { STORE_CONFIG } from '../config/store';
 import { COPY } from '../data/translations';
-import { LanguageMode, Product } from '../types/store';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { LanguageMode, Product, StoreSettings } from '../types/store';
 import { isProductOrderable } from '../utils/cart';
 import { formatPkr, getDiscountPercentage } from '../utils/currency';
+import { saveSubscriberToFirestore } from '../utils/firestoreService';
 import { ResilientImage } from './ResilientImage';
 
 interface ProductDetailModalProps {
   product: Product | null;
   language: LanguageMode;
+  storeSettings: StoreSettings;
   isWishlisted: boolean;
   onClose: () => void;
   onToggleWishlist: (productId: string) => void;
@@ -38,6 +42,7 @@ interface ProductDetailModalProps {
 export function ProductDetailModal({
   product,
   language,
+  storeSettings,
   isWishlisted,
   onClose,
   onToggleWishlist,
@@ -50,11 +55,21 @@ export function ProductDetailModal({
   );
   const [justAdded, setJustAdded] = useState(false);
   const [activeImage, setActiveImage] = useState<string>('');
+  const [restockEmail, setRestockEmail] = useState('');
+  const [restockError, setRestockError] = useState('');
+  const [restockSubscribed, setRestockSubscribed] = useState(false);
+  const [restockSaving, setRestockSaving] = useState(false);
+  const [savedSubscribers, setSavedSubscribers] = useLocalStorage<string[]>(
+    'tekkivo_newsletter_v1',
+    []
+  );
 
   useEffect(() => {
     setQuantity(1);
     setJustAdded(false);
     setActiveImage(product?.image || '');
+    setRestockError('');
+    setRestockSubscribed(false);
     setSelectedColor(
       product?.availableColors && product.availableColors.length > 0
         ? product.availableColors[0]
@@ -92,6 +107,29 @@ export function ProductDetailModal({
     onAddToCart(product.id, quantity, selectedColor);
     setJustAdded(true);
     window.setTimeout(() => setJustAdded(false), 1200);
+  };
+
+  const handleRestockSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = restockEmail.trim().toLowerCase();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setRestockError('Please enter a valid email address.');
+      return;
+    }
+    setRestockError('');
+    setRestockSaving(true);
+    if (!savedSubscribers.includes(trimmed)) {
+      setSavedSubscribers((prev) => [...prev, trimmed]);
+    }
+    try {
+      await saveSubscriberToFirestore(trimmed, 'restock_alert', product.id);
+    } catch {
+      // Saved locally if offline
+    } finally {
+      setRestockSaving(false);
+      setRestockSubscribed(true);
+      setRestockEmail('');
+    }
   };
 
   return (
@@ -216,7 +254,7 @@ export function ProductDetailModal({
                 ·
               </span>
               <span className="text-slate-500">
-                {STORE_CONFIG.estimatedDeliveryWindow}
+                {storeSettings.estimatedDeliveryWindow}
               </span>
             </div>
 
@@ -366,17 +404,65 @@ export function ProductDetailModal({
               </div>
             </div>
 
+            {!canOrder && (
+              <div className="mt-5 rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-2.5">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#10243D]">
+                  <Bell className="w-4 h-4 text-[#F47721]" />
+                  <span>Restock Alerts — Get notified when back in stock</span>
+                </div>
+                {restockSubscribed ? (
+                  <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-3.5 py-2.5 flex items-center gap-2 text-xs font-medium text-emerald-900">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>Thanks! You&apos;re subscribed.</span>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={handleRestockSubmit}
+                    noValidate
+                    className="flex flex-col sm:flex-row gap-2"
+                  >
+                    <input
+                      type="email"
+                      value={restockEmail}
+                      onChange={(e) => setRestockEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      aria-label="Email for restock alerts"
+                      className="flex-1 h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-[#10243D] placeholder:text-slate-400 focus:border-[#F47721] focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={restockSaving}
+                      className="h-10 px-4 rounded-xl bg-[#10243D] hover:bg-[#183558] disabled:opacity-60 text-white text-xs font-semibold whitespace-nowrap cursor-pointer"
+                    >
+                      {restockSaving ? 'Saving...' : 'Notify Me'}
+                    </button>
+                  </form>
+                )}
+                {restockError && (
+                  <p className="text-xs font-medium text-rose-700">
+                    {restockError}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Customer COD Transparency */}
             <div className="mt-6 rounded-2xl bg-slate-50 border border-slate-200/80 p-4 space-y-2.5 text-xs sm:text-sm text-slate-600">
               <div className="flex items-start gap-2.5">
                 <Truck className="w-4 h-4 text-[#F47721] shrink-0 mt-0.5" />
                 <span>
-                  Free COD delivery above{' '}
-                  <strong className="text-[#10243D]">
-                    {formatPkr(STORE_CONFIG.freeDeliveryThresholdPkr)}
-                  </strong>{' '}
-                  (otherwise Rs. {STORE_CONFIG.standardDeliveryFeePkr} flat across
-                  Pakistan).
+                  {storeSettings.freeDeliveryThresholdPkr > 0 ? (
+                    <>
+                      Free COD delivery above{' '}
+                      <strong className="text-[#10243D]">
+                        {formatPkr(storeSettings.freeDeliveryThresholdPkr)}
+                      </strong>{' '}
+                      (otherwise Rs. {storeSettings.standardDeliveryFeePkr}{' '}
+                      flat across Pakistan).
+                    </>
+                  ) : (
+                    'Free Cash on Delivery across Pakistan.'
+                  )}
                 </span>
               </div>
               <div className="flex items-start gap-2.5">

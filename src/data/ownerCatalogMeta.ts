@@ -64,6 +64,15 @@ export const DEFAULT_OWNER_CATALOG_META: Record<string, OwnerProductCostMeta> = 
     dispatchLocation: 'Karachi, Pakistan',
     inspectionStatus: 'Pending Confirmation',
   },
+  'tkv-youngcome-60ml': {
+    productId: 'tkv-youngcome-60ml',
+    supplierProductId: 'YOUNGCOME-60ML',
+    supplierName: 'HHC Dropshipping',
+    supplierCostPkr: 423,
+    listedStock: 2,
+    dispatchLocation: 'Karachi, Pakistan',
+    inspectionStatus: 'Pending Confirmation',
+  },
 };
 
 export const OWNER_CATALOG_META = DEFAULT_OWNER_CATALOG_META;

@@ -33,9 +33,9 @@ export function ProductCard({
 
   const stockLabel =
     product.stockConfirmationStatus === 'out_of_stock' || product.stock <= 0
-      ? 'Out of Stock · Unavailable'
+      ? 'Out of Stock'
       : product.stockConfirmationStatus === 'pending_confirmation'
-      ? `Pending Stock Confirmation (${product.stock} listed)`
+      ? `Pending Confirmation (${product.stock})`
       : `In Stock (${product.stock})`;
 
   const stockColorClass =
@@ -53,8 +53,8 @@ export function ProductCard({
   };
 
   return (
-    <article className="group bg-white rounded-2xl border border-slate-200/90 overflow-hidden flex flex-col transition-shadow hover:shadow-md">
-      {/* Product Photography Slot */}
+    <article className="group bg-white rounded-2xl border border-slate-200/90 overflow-hidden flex flex-col transition-all hover:shadow-md hover:-translate-y-0.5">
+      {/* Product Image */}
       <div className="relative aspect-[4/3] w-full bg-[#F5F7FA] overflow-hidden">
         <button
           type="button"
@@ -68,14 +68,13 @@ export function ProductCard({
             fallbackLabel={product.title}
             fallbackSubtext={
               canOrder
-                ? 'Exact HHC photo pending upload'
+                ? 'Exact product photo pending upload'
                 : 'Currently out of stock'
             }
             className="w-full h-full object-cover"
           />
         </button>
 
-        {/* Wishlist Action */}
         <button
           type="button"
           onClick={() => onToggleWishlist(product.id)}
@@ -85,7 +84,7 @@ export function ProductCard({
               : `Add ${product.title} to wishlist`
           }
           aria-pressed={isWishlisted}
-          className={`absolute top-3 right-3 w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
+          className={`absolute top-2.5 right-2.5 w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
             isWishlisted
               ? 'bg-[#F47721] text-white shadow-sm'
               : 'bg-white/95 text-[#10243D] hover:bg-white shadow-sm'
@@ -98,17 +97,17 @@ export function ProductCard({
         </button>
       </div>
 
-      {/* Product Metadata, Pricing & Controls */}
-      <div className="p-4 sm:p-5 flex flex-col flex-1">
-        {/* Clean Unboxed Metadata Line */}
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-slate-500">
-          <span className="font-medium text-slate-600">{product.category}</span>
+      {/* Product Metadata, Pricing & Action */}
+      <div className="p-3.5 sm:p-5 flex flex-col flex-1">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs text-slate-500">
+          <span className="font-medium text-slate-600 truncate max-w-full">
+            {product.category}
+          </span>
           <span aria-hidden="true">·</span>
           <span className={stockColorClass}>{stockLabel}</span>
         </div>
 
-        {/* Title */}
-        <h3 className="mt-2 font-display text-base sm:text-[17px] font-semibold text-[#10243D] leading-snug">
+        <h3 className="mt-1.5 font-display text-sm sm:text-[17px] font-semibold text-[#10243D] leading-snug line-clamp-2">
           <button
             type="button"
             onClick={() => onOpenDetail(product)}
@@ -118,23 +117,20 @@ export function ProductCard({
           </button>
         </h3>
 
-        {/* Exact Listing Summary */}
         <p className="mt-1.5 text-xs sm:text-sm text-slate-500 line-clamp-2 leading-relaxed">
           {product.shortSpec}
         </p>
 
-        {/* Condition / Packaging / Authenticity Note */}
         {product.conditionNote && (
-          <p className="mt-2 text-xs text-slate-600 bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1.5">
+          <p className="mt-2 text-[11px] sm:text-xs text-slate-600 bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1.5 line-clamp-2">
             {product.conditionNote}
           </p>
         )}
 
-        {/* Price Row & Action */}
-        <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-          <div>
-            <div className="flex items-baseline gap-2">
-              <span className="tabular-nums font-display text-lg font-bold text-[#10243D]">
+        <div className="mt-auto pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-baseline gap-1.5">
+              <span className="tabular-nums font-display text-base sm:text-lg font-bold text-[#10243D]">
                 {formatPkr(product.sellingPricePkr)}
               </span>
               {product.compareAtPricePkr && (
@@ -144,7 +140,7 @@ export function ProductCard({
               )}
             </div>
             {discountPct !== null && (
-              <p className="tabular-nums text-xs font-semibold text-[#F47721]">
+              <p className="tabular-nums text-[11px] font-semibold text-[#F47721]">
                 Save {discountPct}%
               </p>
             )}
@@ -154,7 +150,8 @@ export function ProductCard({
             type="button"
             disabled={!canOrder}
             onClick={handleAdd}
-            className={`h-10 px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
+            aria-label={canOrder ? `${copy.addToCart} ${product.title}` : 'Unavailable'}
+            className={`h-9 sm:h-10 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
               justAdded
                 ? 'bg-emerald-700 text-white'
                 : 'bg-[#10243D] hover:bg-[#F47721] text-white'
@@ -163,12 +160,14 @@ export function ProductCard({
             {justAdded ? (
               <>
                 <Check className="w-4 h-4" />
-                <span>{copy.addedToCart}</span>
+                <span className="hidden sm:inline">{copy.addedToCart}</span>
               </>
             ) : (
               <>
                 <ShoppingBag className="w-4 h-4" />
-                <span>{canOrder ? copy.addToCart : 'Unavailable'}</span>
+                <span className="hidden sm:inline">
+                  {canOrder ? copy.addToCart : 'Unavailable'}
+                </span>
               </>
             )}
           </button>

@@ -1,7 +1,11 @@
 import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { PRODUCT_CATEGORIES } from '../config/store';
 import { COPY } from '../data/translations';
-import { LanguageMode, Product, ProductCategory } from '../types/store';
+import {
+  CategoryDefinition,
+  LanguageMode,
+  Product,
+  ProductCategory,
+} from '../types/store';
 import { isProductOrderable } from '../utils/cart';
 import { ProductCard } from './ProductCard';
 
@@ -10,6 +14,7 @@ export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'available';
 interface CatalogSectionProps {
   language: LanguageMode;
   products: Product[];
+  categories: ReadonlyArray<CategoryDefinition>;
   searchQuery: string;
   onSearchChange: (value: string) => void;
   selectedCategory: ProductCategory | 'All';
@@ -25,6 +30,7 @@ interface CatalogSectionProps {
 export function CatalogSection({
   language,
   products,
+  categories,
   searchQuery,
   onSearchChange,
   selectedCategory,
@@ -41,6 +47,10 @@ export function CatalogSection({
 
   const featuredProducts = products
     .filter((p) => p.isFeatured && isProductOrderable(p))
+    .slice(0, 3);
+
+  const trendingProducts = products
+    .filter((p) => (p.isTrending || p.isBestSeller) && isProductOrderable(p))
     .slice(0, 3);
 
   const filteredProducts = products
@@ -65,8 +75,10 @@ export function CatalogSection({
       if (sortBy === 'price-asc') return a.sellingPricePkr - b.sellingPricePkr;
       if (sortBy === 'price-desc') return b.sellingPricePkr - a.sellingPricePkr;
       if (sortBy === 'featured') {
-        const orderA = Number(isProductOrderable(a)) * 2 + Number(Boolean(a.isBestSeller));
-        const orderB = Number(isProductOrderable(b)) * 2 + Number(Boolean(b.isBestSeller));
+        const orderA =
+          Number(isProductOrderable(a)) * 2 + Number(Boolean(a.isBestSeller));
+        const orderB =
+          Number(isProductOrderable(b)) * 2 + Number(Boolean(b.isBestSeller));
         return orderB - orderA;
       }
       return 0;
@@ -102,7 +114,7 @@ export function CatalogSection({
               </p>
             </div>
 
-            <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="mt-7 grid grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 lg:gap-8">
               {featuredProducts.map((product) => (
                 <ProductCard
                   key={`featured-${product.id}`}
@@ -119,8 +131,8 @@ export function CatalogSection({
         </section>
       )}
 
-      {/* Main Catalog & Best Sellers with Search + 7 Category Filters */}
-      <section id="catalog" className="py-14 sm:py-16 bg-white">
+      {/* Main Catalog & Best Sellers with Search + Category Filters */}
+      <section id="catalog" className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <div>
@@ -178,11 +190,11 @@ export function CatalogSection({
             </div>
           </div>
 
-          {/* Interactive 7-Category Filter Tabs */}
+          {/* Interactive Category Filter Tabs */}
           <div
             role="tablist"
             aria-label="Filter products by category"
-            className="mt-7 flex items-center gap-2 overflow-x-auto pb-2"
+            className="mt-7 flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar"
           >
             <button
               type="button"
@@ -197,7 +209,7 @@ export function CatalogSection({
             >
               All Products
             </button>
-            {PRODUCT_CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.name}
                 type="button"
@@ -215,9 +227,9 @@ export function CatalogSection({
             ))}
           </div>
 
-          {/* Product Grid or Clean Empty Category State */}
+          {/* Product Grid */}
           {filteredProducts.length > 0 ? (
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 lg:gap-8">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -239,7 +251,7 @@ export function CatalogSection({
               </p>
               <p className="mt-1 text-sm text-slate-600 max-w-md mx-auto">
                 {selectedCategory !== 'All' && !normalizedQuery
-                  ? 'New supplier-confirmed products for this category can be added anytime from Store Owner Product Management.'
+                  ? 'New products for this category can be added anytime from the TEKKIVO Admin Dashboard.'
                   : 'Try clearing your search keyword or switching back to all categories.'}
               </p>
               <button
@@ -258,11 +270,62 @@ export function CatalogSection({
         </div>
       </section>
 
+      {/* Trending Products Section */}
+      {trendingProducts.length > 0 && (
+        <section
+          id="trending"
+          className="py-12 sm:py-16 bg-slate-50/70 border-t border-slate-200/80"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold text-[#F47721]">
+                  Customer Favorites
+                </p>
+                <h2 className="mt-1 font-display text-2xl sm:text-3xl font-bold text-[#10243D] tracking-tight">
+                  {language === 'ur' ? 'مقبول مصنوعات' : 'Trending Products'}
+                </h2>
+                <p className="mt-2 text-sm sm:text-base text-slate-600">
+                  Popular picks across electronics, smart lighting, and kitchen
+                  appliances.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectCategory('All');
+                  document
+                    .getElementById('catalog')
+                    ?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-sm font-semibold text-[#F47721] hover:text-[#d66010] transition-colors cursor-pointer"
+              >
+                Explore All →
+              </button>
+            </div>
+
+            <div className="mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 lg:gap-8">
+              {trendingProducts.map((product) => (
+                <ProductCard
+                  key={`trending-${product.id}`}
+                  product={product}
+                  language={language}
+                  isWishlisted={wishlistIds.includes(product.id)}
+                  onToggleWishlist={onToggleWishlist}
+                  onAddToCart={onAddToCart}
+                  onOpenDetail={onOpenDetail}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* New Arrivals Section */}
       {newArrivalProducts.length > 0 && (
         <section
           id="new-arrivals"
-          className="py-14 sm:py-16 bg-slate-50/70 border-t border-slate-200/80"
+          className="py-12 sm:py-16 bg-white border-t border-slate-200/80"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
@@ -293,7 +356,7 @@ export function CatalogSection({
               </button>
             </div>
 
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 lg:gap-8">
               {newArrivalProducts.map((product) => (
                 <ProductCard
                   key={`arrival-${product.id}`}

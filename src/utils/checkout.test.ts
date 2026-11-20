@@ -30,10 +30,11 @@ import {
   validatePakistaniPhone,
 } from './validation';
 
-test('Store configuration uses TEKKIVO brand, Smart Choice. Better Life. tagline, WhatsApp 923462796879, and 7 non-grocery categories', () => {
+test('Store configuration uses TEKKIVO brand, Smart Choice. Better Life. tagline, WhatsApp 923462796879, tekkivo.store@gmail.com, and 12 main categories', () => {
   assert.equal(STORE_CONFIG.brandName, 'TEKKIVO');
   assert.equal(STORE_CONFIG.tagline, 'Smart Choice. Better Life.');
   assert.equal(STORE_CONFIG.ownerWhatsAppNumber, '923462796879');
+  assert.equal(STORE_CONFIG.supportEmail, 'tekkivo.store@gmail.com');
   assert.equal(OWNER_WHATSAPP_NUMBER, '923462796879');
   assert.equal(
     formatWhatsAppDisplayNumber(OWNER_WHATSAPP_NUMBER),
@@ -42,18 +43,23 @@ test('Store configuration uses TEKKIVO brand, Smart Choice. Better Life. tagline
 
   const categoryNames = PRODUCT_CATEGORIES.map((c) => c.name);
   assert.deepEqual(categoryNames, [
-    'Kitchen Tools',
-    'Kitchen Appliances',
-    'Cookware & Bakeware',
-    'Home Essentials',
     'Electronics & Gadgets',
+    'Kitchen Tools & Appliances',
+    'Home & Living',
+    'Beauty & Personal Care',
+    'Fashion & Accessories',
+    'Baby & Kids',
     'Mobile Accessories',
-    'Audio & Headphones',
+    'Grocery & Food Items',
+    'Health & Personal Care',
+    'Toys & Games',
+    'Sports & Outdoor',
+    'Cleaning & Household Essentials',
   ]);
 });
 
-test('7 HHC catalog listings exist, Gionee is out of stock, RAF Electric Stove is Rs. 2,029, and Moon Earth Projection Lamp is Rs. 1,010 with Rs. 500 admin commission', () => {
-  assert.equal(DEFAULT_PRODUCTS.length, 7);
+test('8 catalog listings exist, Gionee is out of stock, RAF Electric Stove is Rs. 2,029, Moon Lamp is Rs. 1,010, and Youngcome Lotion is Rs. 600', () => {
+  assert.equal(DEFAULT_PRODUCTS.length, 8);
 
   const gionee = DEFAULT_PRODUCTS.find((p) => p.id === 'hhc-3771681')!;
   assert.equal(gionee.title, 'Gionee Type-C Handsfree');
@@ -107,7 +113,7 @@ test('7 HHC catalog listings exist, Gionee is out of stock, RAF Electric Stove i
     rafStove.title,
     'RAF Electric Stove | 1000W Hot Plate | Heats in 2 Mins | Automatic & Easy to Clean'
   );
-  assert.equal(rafStove.category, 'Kitchen Appliances');
+  assert.equal(rafStove.category, 'Kitchen Tools & Appliances');
   assert.equal(rafStove.sellingPricePkr, 2029);
   assert.equal(rafStove.isPublished, true);
   assert.equal(rafStove.stock, 2);
@@ -144,7 +150,7 @@ test('7 HHC catalog listings exist, Gionee is out of stock, RAF Electric Stove i
     lamp.title,
     'USB Ceiling Moon Earth Projection Atmosphere Light Starry Sky Lamp – 6 Lenses'
   );
-  assert.equal(lamp.category, 'Home Essentials');
+  assert.equal(lamp.category, 'Home & Living');
   assert.equal(lamp.sellingPricePkr, 1010);
   assert.equal(lamp.stock, 945);
   assert.equal(lamp.stockConfirmationStatus, 'pending_confirmation');
@@ -207,15 +213,56 @@ test('7 HHC catalog listings exist, Gionee is out of stock, RAF Electric Stove i
   assert.ok(!lampOrderMsg.includes('510'));
   assert.ok(!lampOrderMsg.includes('500'));
   assert.ok(!lampOrderMsg.includes('3765576'));
+
+  // Youngcome Face & Body Whitening Lotion 60ml (tkv-youngcome-60ml)
+  const lotion = DEFAULT_PRODUCTS.find((p) => p.id === 'tkv-youngcome-60ml')!;
+  assert.equal(lotion.title, 'Youngcome Face & Body Whitening Lotion 60ml');
+  assert.equal(
+    lotion.description,
+    'Face and body moisturizing lotion with collagen and milk formula, marketed for uneven skin tone and dark spots.'
+  );
+  assert.equal(lotion.category, 'Beauty & Personal Care');
+  assert.equal(lotion.sellingPricePkr, 600);
+  assert.equal(lotion.stock, 2);
+  assert.equal(lotion.isPublished, true);
+  assert.equal(lotion.galleryImages?.length, 2);
+  assert.equal(
+    lotion.image,
+    '/assets/aistudio/2026_09_21_5ba51237c3c64bfc2cec0d1d3d34f0e9_af456f38.png'
+  );
+  assert.equal(isProductOrderable(lotion), true);
+
+  const lotionMeta = DEFAULT_OWNER_CATALOG_META[lotion.id];
+  assert.equal(lotionMeta.supplierCostPkr, 423);
+  assert.equal(lotion.sellingPricePkr - lotionMeta.supplierCostPkr, 177);
+
+  let lotionCart = addCartItem([], DEFAULT_PRODUCTS, lotion.id, 1);
+  assert.equal(lotionCart.length, 1);
+  const lotionSummary = buildCartSummary(lotionCart, DEFAULT_PRODUCTS);
+  assert.equal(lotionSummary.subtotalPkr, 600);
 });
 
-test('PKR currency formatting and COD shipping fee threshold', () => {
+test('PKR currency formatting and configurable COD shipping fee threshold', () => {
   assert.equal(formatPkr(1499), 'Rs. 1,499');
   assert.equal(formatPkr(0), 'Rs. 0');
   assert.equal(calculateShippingFee(0), 0);
   assert.equal(calculateShippingFee(1499), STORE_CONFIG.standardDeliveryFeePkr);
   assert.equal(calculateShippingFee(5000), 0);
   assert.equal(calculateShippingFee(6500), 0);
+  assert.equal(
+    calculateShippingFee(2500, {
+      standardDeliveryFeePkr: 350,
+      freeDeliveryThresholdPkr: 3000,
+    }),
+    350
+  );
+  assert.equal(
+    calculateShippingFee(3000, {
+      standardDeliveryFeePkr: 350,
+      freeDeliveryThresholdPkr: 3000,
+    }),
+    0
+  );
 });
 
 test('Pakistani mobile number validation accepts local & +92 formats and rejects invalid numbers', () => {
