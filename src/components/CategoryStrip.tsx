@@ -1,134 +1,162 @@
 import {
   Baby,
   Cpu,
-  Dumbbell,
-  Gamepad2,
-  HeartPulse,
+  Heart,
   Home,
   ShoppingBasket,
   Shirt,
   Smartphone,
-  Sparkles,
   SprayCan,
   Utensils,
 } from 'lucide-react';
-import { COPY } from '../data/translations';
-import {
-  CategoryDefinition,
-  LanguageMode,
-  Product,
-  ProductCategory,
-} from '../types/store';
+import { LanguageMode, ProductCategory } from '../types/store';
+import { ResilientImage } from './ResilientImage';
 
 interface CategoryStripProps {
   language: LanguageMode;
-  categories: ReadonlyArray<CategoryDefinition>;
-  products: Product[];
   selectedCategory: ProductCategory | 'All';
   onSelectCategory: (category: ProductCategory | 'All') => void;
 }
 
-function getCategoryIcon(name: string) {
-  const lower = name.toLowerCase();
-  if (lower.includes('electron') || lower.includes('gadget')) return Cpu;
-  if (lower.includes('kitchen')) return Utensils;
-  if (lower.includes('home') || lower.includes('living')) return Home;
-  if (lower.includes('beauty')) return Sparkles;
-  if (lower.includes('fashion')) return Shirt;
-  if (lower.includes('baby') || lower.includes('kid')) return Baby;
-  if (lower.includes('mobile')) return Smartphone;
-  if (lower.includes('grocery') || lower.includes('food'))
-    return ShoppingBasket;
-  if (lower.includes('health')) return HeartPulse;
-  if (lower.includes('toy') || lower.includes('game')) return Gamepad2;
-  if (lower.includes('sport') || lower.includes('outdoor')) return Dumbbell;
-  if (lower.includes('clean') || lower.includes('household')) return SprayCan;
-  return ShoppingBasket;
+interface FeaturedCategoryCard {
+  label: string;
+  labelUr: string;
+  targetCategory: ProductCategory;
+  image: string;
+  icon: typeof Cpu;
 }
+
+const FEATURED_CATEGORIES: ReadonlyArray<FeaturedCategoryCard> = [
+  {
+    label: 'Electronics & Gadgets',
+    labelUr: 'الیکٹرانکس اور گیجٹس',
+    targetCategory: 'Electronics & Gadgets',
+    image: '/assets/products/t-tech-wireless-earbuds.jpg',
+    icon: Cpu,
+  },
+  {
+    label: 'Kitchen Tools',
+    labelUr: 'کچن ٹولز',
+    targetCategory: 'Kitchen Tools & Appliances',
+    image:
+      '/assets/aistudio/2025_12_17_08a1977cec497809d74af5ecd055a3fb_1d3b4c47.webp',
+    icon: Utensils,
+  },
+  {
+    label: 'Home & Living',
+    labelUr: 'ہوم اور لیونگ',
+    targetCategory: 'Home & Living',
+    image:
+      '/assets/aistudio/2026_09_15_8d60c5097981457c8a749953922d7f62_715bd886.jpeg',
+    icon: Home,
+  },
+  {
+    label: 'Beauty & Personal Care',
+    labelUr: 'بیوٹی کیئر',
+    targetCategory: 'Beauty & Personal Care',
+    image:
+      '/assets/aistudio/2026_09_21_5ba51237c3c64bfc2cec0d1d3d34f0e9_af456f38.png',
+    icon: Heart,
+  },
+  {
+    label: 'Fashion & Accessories',
+    labelUr: 'فیشن اسیسریز',
+    targetCategory: 'Fashion & Accessories',
+    image: '/src/assets/images/cat_fashion_accessories_1795183344161.jpg',
+    icon: Shirt,
+  },
+  {
+    label: 'Baby & Kids',
+    labelUr: 'بے بی اور کڈز',
+    targetCategory: 'Baby & Kids',
+    image: '/src/assets/images/cat_baby_kids_1795183344473.jpg',
+    icon: Baby,
+  },
+  {
+    label: 'Mobile Accessories',
+    labelUr: 'موبائل اسیسریز',
+    targetCategory: 'Mobile Accessories',
+    image: '/assets/aistudio/photo_1794983484395_0_66f84968.jpg',
+    icon: Smartphone,
+  },
+  {
+    label: 'Grocery',
+    labelUr: 'گروسری',
+    targetCategory: 'Grocery & Food Items',
+    image: '/src/assets/images/cat_grocery_pantry_1795183344031.jpg',
+    icon: ShoppingBasket,
+  },
+  {
+    label: 'Daily Essentials',
+    labelUr: 'روزمرہ ضروریات',
+    targetCategory: 'Cleaning & Household Essentials',
+    image: '/src/assets/images/cat_daily_essentials_1795183344317.jpg',
+    icon: SprayCan,
+  },
+];
 
 export function CategoryStrip({
   language,
-  categories,
-  products,
   selectedCategory,
   onSelectCategory,
 }: CategoryStripProps) {
-  const copy = COPY[language];
-
   return (
     <section
       id="categories"
-      className="py-12 sm:py-16 bg-slate-50/70 border-b border-slate-200/80"
+      aria-label="Shop by Category"
+      className="py-5 sm:py-6 bg-white"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-2xl">
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#10243D] tracking-tight">
-              {copy.shopByCategoryTitle}
-            </h2>
-            <p
-              className={`mt-2 text-sm sm:text-base text-slate-600 ${
-                language === 'ur' ? 'font-urdu text-right' : ''
-              }`}
-              dir={language === 'ur' ? 'rtl' : 'ltr'}
-            >
-              {copy.shopByCategorySubtitle}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => onSelectCategory('All')}
-            className="text-sm font-semibold text-[#F47721] hover:text-[#d66010] transition-colors cursor-pointer whitespace-nowrap"
-          >
-            View All Products →
-          </button>
+      <div className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
+        {/* Centered Header with Side Rules Matching Reference */}
+        <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-5">
+          <span
+            aria-hidden="true"
+            className="h-px flex-1 max-w-[140px] bg-slate-200"
+          />
+          <h2 className="font-display text-base sm:text-xl font-bold text-[#10243D] tracking-tight whitespace-nowrap">
+            Shop by Category
+          </h2>
+          <span
+            aria-hidden="true"
+            className="h-px flex-1 max-w-[140px] bg-slate-200"
+          />
         </div>
 
-        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4">
-          {categories.map((cat) => {
-            const Icon = getCategoryIcon(cat.name);
-            const categoryProducts = products.filter(
-              (p) => p.category === cat.name
-            );
-            const isActive = selectedCategory === cat.name;
-
+        {/* Compact Category Cards: Horizontally scrollable on mobile, 9-col compact row on desktop */}
+        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2 sm:gap-2.5">
+          {FEATURED_CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const isActive = selectedCategory === cat.targetCategory;
             return (
               <button
-                key={cat.name}
+                key={cat.label}
                 type="button"
-                onClick={() => onSelectCategory(cat.name)}
-                className={`group text-left rounded-2xl p-4 bg-white border transition-all cursor-pointer flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
+                onClick={() =>
+                  onSelectCategory(isActive ? 'All' : cat.targetCategory)
+                }
+                className={`group rounded-xl border bg-white p-1.5 sm:p-2 text-left transition-all cursor-pointer flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
                   isActive
                     ? 'border-[#F47721] ring-1 ring-[#F47721]/30 shadow-xs'
-                    : 'border-slate-200/90 hover:border-[#10243D]/40 hover:shadow-xs'
+                    : 'border-slate-200/80 hover:border-[#10243D]/40 hover:shadow-xs'
                 }`}
               >
-                <div
-                  className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 transition-colors ${
-                    isActive
-                      ? 'bg-[#F47721] text-white'
-                      : 'bg-[#10243D]/5 text-[#10243D] group-hover:bg-[#10243D] group-hover:text-white'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
+                <div className="aspect-square w-full rounded-lg bg-[#F8FAFC] overflow-hidden p-1.5 flex items-center justify-center">
+                  <ResilientImage
+                    src={cat.image}
+                    alt={cat.label}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                  />
                 </div>
-
-                <h3 className="font-display text-sm font-semibold text-[#10243D] leading-snug">
-                  {cat.name}
-                </h3>
-                {language === 'ur' && (
-                  <p className="font-urdu text-xs text-slate-600 mt-0.5">
-                    {cat.nameUr}
-                  </p>
-                )}
-                <p className="mt-auto pt-2 text-xs text-slate-500 tabular-nums">
-                  {categoryProducts.length > 0
-                    ? `${categoryProducts.length} ${
-                        categoryProducts.length === 1 ? 'listing' : 'listings'
-                      }`
-                    : 'Ready for items'}
-                </p>
+                <div className="mt-1.5 px-0.5 flex items-center gap-1 min-w-0">
+                  <Icon
+                    className={`w-3.5 h-3.5 shrink-0 ${
+                      isActive ? 'text-[#F47721]' : 'text-[#10243D]'
+                    }`}
+                  />
+                  <span className="text-[11px] sm:text-xs font-semibold text-[#10243D] leading-tight line-clamp-1">
+                    {language === 'ur' ? cat.labelUr : cat.label}
+                  </span>
+                </div>
               </button>
             );
           })}

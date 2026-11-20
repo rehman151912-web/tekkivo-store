@@ -7,11 +7,7 @@ import {
   ShoppingBag,
   User,
 } from 'lucide-react';
-import {
-  CategoryDefinition,
-  LanguageMode,
-  ProductCategory,
-} from '../types/store';
+import { LanguageMode, ProductCategory } from '../types/store';
 import { formatPkr } from '../utils/currency';
 
 interface HeaderProps {
@@ -19,13 +15,10 @@ interface HeaderProps {
   onToggleLanguage: (lang: LanguageMode) => void;
   searchQuery: string;
   onSearchSubmit: (query: string) => void;
-  categories: ReadonlyArray<CategoryDefinition>;
-  selectedCategory: ProductCategory | 'All';
   onSelectCategory: (category: ProductCategory | 'All') => void;
   freeDeliveryThresholdPkr: number;
   cartCount: number;
   wishlistCount: number;
-  onOpenSearch: () => void;
   onOpenWishlist: () => void;
   onOpenCart: () => void;
   onOpenTrackOrder: () => void;
@@ -33,18 +26,28 @@ interface HeaderProps {
   onNavigateSection: (sectionId: string) => void;
 }
 
+const COMPACT_NAV_LINKS: ReadonlyArray<{
+  label: string;
+  sectionId: string;
+  resetFilter?: boolean;
+}> = [
+  { label: 'Home', sectionId: 'top', resetFilter: true },
+  { label: 'Shop', sectionId: 'catalog', resetFilter: true },
+  { label: 'New Arrivals', sectionId: 'new-arrivals', resetFilter: true },
+  { label: 'Best Sellers', sectionId: 'best-sellers', resetFilter: true },
+  { label: 'Deals', sectionId: 'special-deals', resetFilter: true },
+  { label: 'Contact', sectionId: 'contact' },
+];
+
 export function Header({
   language,
   onToggleLanguage,
   searchQuery,
   onSearchSubmit,
-  categories,
-  selectedCategory,
   onSelectCategory,
   freeDeliveryThresholdPkr,
   cartCount,
   wishlistCount,
-  onOpenSearch,
   onOpenWishlist,
   onOpenCart,
   onOpenTrackOrder,
@@ -61,42 +64,41 @@ export function Header({
   const handleSearchFormSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSearchSubmit(headerSearch);
+    if (headerSearch.trim()) {
+      onNavigateSection('catalog');
+    }
   };
 
   return (
-    <div className="bg-white border-b border-slate-200/80">
-      {/* Top Bar */}
-      <div className="bg-[#10243D] text-slate-200 text-[11px] sm:text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-2">
-          <p className="font-medium">
-            Cash on Delivery across Pakistan{' '}
-            <span aria-hidden="true" className="mx-1.5 text-white/30">
-              |
-            </span>{' '}
-            <span className="text-[#F47721] font-semibold">
+    <>
+      {/* Top Trust Utility Strip (Desktop/Tablet) */}
+      <div className="hidden sm:block bg-[#10243D] text-slate-200 text-[11px] sm:text-xs">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 lg:gap-6 truncate">
+            <span className="text-[#F47721] font-semibold whitespace-nowrap">
               {freeDeliveryThresholdPkr > 0
-                ? `Free delivery on ${formatPkr(freeDeliveryThresholdPkr)}+`
-                : 'Free delivery across Pakistan'}
+                ? `Free Delivery on Orders ${formatPkr(freeDeliveryThresholdPkr)}+`
+                : 'Free COD Delivery Across Pakistan'}
             </span>
-          </p>
+            <span aria-hidden="true" className="text-white/25">
+              |
+            </span>
+            <span className="whitespace-nowrap">Cash on Delivery (COD)</span>
+            <span aria-hidden="true" className="hidden md:inline text-white/25">
+              |
+            </span>
+            <span className="hidden md:inline whitespace-nowrap">
+              7-Day Check Support
+            </span>
+          </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <button
               type="button"
               onClick={onOpenTrackOrder}
               className="hover:text-[#F47721] transition-colors whitespace-nowrap cursor-pointer"
             >
               Track Order
-            </button>
-            <span aria-hidden="true" className="text-white/25">
-              |
-            </span>
-            <button
-              type="button"
-              onClick={() => onNavigateSection('contact')}
-              className="hover:text-[#F47721] transition-colors whitespace-nowrap cursor-pointer"
-            >
-              Help &amp; Contact
             </button>
             <span aria-hidden="true" className="text-white/25">
               |
@@ -134,67 +136,91 @@ export function Header({
         </div>
       </div>
 
-      {/* Main Sticky Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3 sm:gap-6">
-          {/* Existing TEKKIVO Logo */}
+      {/* Main Sticky Header: TEKKIVO Logo, Compact Nav, Search Bar, Account, Wishlist, Cart */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2.5 sm:gap-4 lg:gap-6">
+          {/* Brand Logo */}
           <a
             href="#top"
             onClick={(e) => {
               e.preventDefault();
+              onSelectCategory('All');
+              onSearchSubmit('');
               onNavigateSection('top');
             }}
-            className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10243D] whitespace-nowrap shrink-0 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] rounded-md"
+            className="font-display text-lg sm:text-xl font-bold tracking-tight text-[#10243D] whitespace-nowrap shrink-0 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] rounded-md"
           >
             <span
               aria-hidden="true"
-              className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#10243D] text-white text-sm font-bold"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#10243D] text-white text-sm font-bold relative overflow-hidden"
             >
-              T
+              <span>T</span>
+              <span className="absolute bottom-0 inset-x-0 h-1 bg-[#F47721]" />
             </span>
             <span>
               TEKKIV<span className="text-[#F47721]">O</span>
             </span>
           </a>
 
-          {/* Wide Search Bar */}
+          {/* Compact Navigation Menu (Desktop) */}
+          <nav
+            aria-label="Primary Store Navigation"
+            className="hidden lg:flex items-center gap-4 xl:gap-5 text-xs xl:text-sm font-medium text-slate-700 shrink-0"
+          >
+            {COMPACT_NAV_LINKS.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => {
+                  if (item.resetFilter) {
+                    onSelectCategory('All');
+                    onSearchSubmit('');
+                  }
+                  onNavigateSection(item.sectionId);
+                }}
+                className="hover:text-[#F47721] transition-colors whitespace-nowrap shrink-0 cursor-pointer py-1"
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Desktop/Tablet Inline Search Bar */}
           <form
             onSubmit={handleSearchFormSubmit}
-            className="order-3 lg:order-2 w-full lg:flex-1 lg:max-w-2xl flex items-stretch gap-2"
+            className="hidden md:flex flex-1 max-w-md items-center relative"
           >
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="search"
-                value={headerSearch}
-                onChange={(e) => setHeaderSearch(e.target.value)}
-                placeholder="Search electronics, kitchen tools, beauty, groceries..."
-                aria-label="Search products on TEKKIVO"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-sm text-[#10243D] placeholder:text-slate-400 focus:bg-white focus:border-[#F47721] focus:outline-none focus:ring-2 focus:ring-[#F47721]/20 transition-colors"
-              />
-            </div>
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+            <input
+              type="search"
+              value={headerSearch}
+              onChange={(e) => {
+                setHeaderSearch(e.target.value);
+                onSearchSubmit(e.target.value);
+              }}
+              placeholder="Search electronics, kitchen, home..."
+              aria-label="Search products on TEKKIVO"
+              className="w-full h-9 sm:h-10 pl-9 pr-16 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-[#10243D] placeholder:text-slate-400 focus:bg-white focus:border-[#F47721] focus:outline-none focus:ring-2 focus:ring-[#F47721]/20 transition-colors"
+            />
             <button
               type="submit"
-              aria-label="Search catalog"
-              className="h-11 px-4 sm:px-5 rounded-xl bg-[#10243D] hover:bg-[#183558] text-white text-sm font-semibold whitespace-nowrap shrink-0 inline-flex items-center gap-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721]"
+              className="absolute right-1 h-7 sm:h-8 px-2.5 rounded-lg bg-[#10243D] hover:bg-[#F47721] text-white text-[11px] font-semibold transition-colors cursor-pointer"
             >
-              <Search className="w-4 h-4 sm:hidden" />
-              <span className="hidden sm:inline">Search</span>
+              Search
             </button>
           </form>
 
-          {/* Right Actions: Account/Admin, Wishlist, Cart */}
-          <div className="order-2 lg:order-3 flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Right Utility Icons: Account, Wishlist, Cart */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setAccountOpen((prev) => !prev)}
                 aria-expanded={accountOpen}
                 aria-label="Account and admin menu"
-                className="h-10 px-2.5 sm:px-3 rounded-xl text-slate-700 hover:text-[#10243D] hover:bg-slate-100 transition-colors inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721]"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl text-[#10243D] hover:bg-slate-100 transition-colors inline-flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721]"
               >
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">Account</span>
+                <User className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
               </button>
 
               {accountOpen && (
@@ -219,13 +245,16 @@ export function Header({
                     <button
                       type="button"
                       onClick={() => {
+                        onToggleLanguage(language === 'en' ? 'ur' : 'en');
                         setAccountOpen(false);
-                        onOpenSearch();
                       }}
-                      className="w-full px-4 py-2.5 text-left text-[#10243D] hover:bg-slate-50 flex items-center gap-2.5 font-medium cursor-pointer"
+                      className="sm:hidden w-full px-4 py-2.5 text-left text-[#10243D] hover:bg-slate-50 flex items-center gap-2.5 font-medium cursor-pointer"
                     >
-                      <Search className="w-4 h-4 text-slate-500" />
-                      <span>Quick Product Finder</span>
+                      <Globe className="w-4 h-4 text-slate-500" />
+                      <span>
+                        Language:{' '}
+                        {language === 'en' ? 'Switch to اردو' : 'Switch to EN'}
+                      </span>
                     </button>
                     <div className="my-1 border-t border-slate-100" />
                     <button
@@ -234,9 +263,9 @@ export function Header({
                         setAccountOpen(false);
                         onOpenOwnerPortal();
                       }}
-                      className="w-full px-4 py-2.5 text-left text-slate-600 hover:text-[#10243D] hover:bg-slate-50 font-semibold cursor-pointer"
+                      className="w-full px-4 py-2.5 text-left text-slate-700 hover:text-[#10243D] hover:bg-slate-50 font-semibold cursor-pointer"
                     >
-                      Admin Dashboard
+                      Admin &amp; Product Manager
                     </button>
                   </div>
                 </>
@@ -247,13 +276,12 @@ export function Header({
               type="button"
               onClick={onOpenWishlist}
               aria-label={`Open wishlist (${wishlistCount} items)`}
-              className="relative h-10 px-2.5 sm:px-3 rounded-xl text-slate-700 hover:text-[#10243D] hover:bg-slate-100 transition-colors inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721]"
+              className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl text-[#10243D] hover:bg-slate-100 transition-colors inline-flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721]"
             >
-              <Heart className="w-4 h-4" />
-              <span className="hidden sm:inline">Wishlist</span>
+              <Heart className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
               {wishlistCount > 0 && (
-                <span className="tabular-nums text-xs font-bold text-[#F47721]">
-                  ({wishlistCount})
+                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#10243D] text-white text-[10px] font-bold inline-flex items-center justify-center tabular-nums">
+                  {wishlistCount}
                 </span>
               )}
             </button>
@@ -262,11 +290,11 @@ export function Header({
               type="button"
               onClick={onOpenCart}
               aria-label={`Open shopping cart (${cartCount} items)`}
-              className="h-10 px-3 sm:px-4 rounded-xl bg-[#10243D] hover:bg-[#183558] text-white text-xs sm:text-sm font-semibold transition-colors inline-flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721]"
+              className="relative h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl bg-[#10243D] hover:bg-[#183558] text-white text-xs sm:text-sm font-semibold transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721]"
             >
               <ShoppingBag className="w-4 h-4 text-[#F47721]" />
-              <span>Cart</span>
-              <span className="tabular-nums text-xs bg-[#F47721] text-white px-1.5 py-0.5 rounded-md font-bold">
+              <span className="hidden sm:inline">Cart</span>
+              <span className="tabular-nums text-[11px] bg-[#F47721] text-white min-w-[18px] h-[18px] px-1 rounded-md font-bold inline-flex items-center justify-center">
                 {cartCount}
               </span>
             </button>
@@ -274,43 +302,56 @@ export function Header({
         </div>
       </header>
 
-      {/* Horizontal Category Menu Row (12 Categories) */}
-      <nav
-        aria-label="Store Categories"
-        className="border-t border-slate-100 bg-slate-50/70"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-5 overflow-x-auto no-scrollbar">
+      {/* Non-sticky Mobile Search Bar + Quick Links Row */}
+      <div className="md:hidden bg-white border-b border-slate-200 px-3 py-2 space-y-2">
+        <form
+          onSubmit={handleSearchFormSubmit}
+          className="flex items-center gap-1.5"
+        >
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="search"
+              value={headerSearch}
+              onChange={(e) => {
+                setHeaderSearch(e.target.value);
+                onSearchSubmit(e.target.value);
+              }}
+              placeholder="Search products in TEKKIVO..."
+              aria-label="Search products on TEKKIVO mobile"
+              className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-xs text-[#10243D] placeholder:text-slate-400 focus:bg-white focus:border-[#F47721] focus:outline-none"
+            />
+          </div>
           <button
-            type="button"
-            onClick={() => onSelectCategory('All')}
-            className={`py-2.5 text-xs sm:text-sm font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors cursor-pointer ${
-              selectedCategory === 'All'
-                ? 'border-[#F47721] text-[#10243D] font-semibold'
-                : 'border-transparent text-slate-600 hover:text-[#10243D]'
-            }`}
+            type="submit"
+            className="h-9 px-3 rounded-lg bg-[#10243D] text-white text-xs font-semibold shrink-0 cursor-pointer"
           >
-            All Products
+            Search
           </button>
+        </form>
 
-          {categories.map((cat) => {
-            const isActive = selectedCategory === cat.name;
-            return (
-              <button
-                key={cat.name}
-                type="button"
-                onClick={() => onSelectCategory(cat.name)}
-                className={`py-2.5 text-xs sm:text-sm font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors cursor-pointer ${
-                  isActive
-                    ? 'border-[#F47721] text-[#10243D] font-semibold'
-                    : 'border-transparent text-slate-600 hover:text-[#10243D]'
-                }`}
-              >
-                {cat.name}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-    </div>
+        <nav
+          aria-label="Quick Store Sections"
+          className="flex items-center gap-4 overflow-x-auto no-scrollbar text-xs font-medium text-slate-600"
+        >
+          {COMPACT_NAV_LINKS.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => {
+                if (item.resetFilter) {
+                  onSelectCategory('All');
+                  onSearchSubmit('');
+                }
+                onNavigateSection(item.sectionId);
+              }}
+              className="hover:text-[#F47721] whitespace-nowrap shrink-0 py-0.5 cursor-pointer"
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+    </>
   );
 }

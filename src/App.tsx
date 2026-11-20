@@ -11,16 +11,15 @@ import { CatalogSection, SortOption } from './components/CatalogSection';
 import { CategoryStrip } from './components/CategoryStrip';
 import { CheckoutPage } from './components/CheckoutPage';
 import { ContactSection } from './components/ContactSection';
-import { CustomerReviewsSection } from './components/CustomerReviewsSection';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { NewsletterSection } from './components/NewsletterSection';
 import { OwnerPortalPage } from './components/OwnerPortalPage';
 import { ProductDetailModal } from './components/ProductDetailModal';
-import { SearchOverlay } from './components/SearchOverlay';
 import { ShoppingCartPage } from './components/ShoppingCartPage';
-import { SpecialOffersBanner } from './components/SpecialOffersBanner';
+import { StoreInfoModal, StoreInfoModalType } from './components/StoreInfoModal';
 import { TrackOrderModal } from './components/TrackOrderModal';
 import { WhyChooseTekkivo } from './components/WhyChooseTekkivo';
 import { WishlistDrawer } from './components/WishlistDrawer';
@@ -118,10 +117,11 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('featured');
 
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isTrackOrderOpen, setIsTrackOrderOpen] = useState(false);
+  const [activeInfoModal, setActiveInfoModal] =
+    useState<StoreInfoModalType>(null);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -328,7 +328,24 @@ export default function App() {
 
   const handleSelectCategory = (category: ProductCategory | 'All') => {
     setSelectedCategory(category);
-    scrollToSection('catalog');
+    if (activePage !== 'home') {
+      navigateToPage('home');
+      if (category !== 'All') {
+        window.setTimeout(() => {
+          document
+            .getElementById('catalog')
+            ?.scrollIntoView({ behavior: 'smooth' });
+        }, 80);
+      }
+      return;
+    }
+    if (category !== 'All') {
+      window.setTimeout(() => {
+        document
+          .getElementById('catalog')
+          ?.scrollIntoView({ behavior: 'smooth' });
+      }, 40);
+    }
   };
 
   const handleAddToCart = (
@@ -505,23 +522,21 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#10243D]">
+    <div id="top" className="min-h-screen flex flex-col bg-white text-[#10243D] pb-14 md:pb-0">
       <Header
         language={language}
         onToggleLanguage={setLanguage}
         searchQuery={searchQuery}
         onSearchSubmit={(query) => {
           setSearchQuery(query);
-          setSelectedCategory('All');
-          scrollToSection('catalog');
+          if (activePage !== 'home') {
+            navigateToPage('home');
+          }
         }}
-        categories={storeSettings.categories}
-        selectedCategory={selectedCategory}
         onSelectCategory={handleSelectCategory}
         freeDeliveryThresholdPkr={storeSettings.freeDeliveryThresholdPkr}
         cartCount={totalCartCount}
         wishlistCount={wishlistIds.length}
-        onOpenSearch={() => setIsSearchOpen(true)}
         onOpenWishlist={() => setIsWishlistOpen(true)}
         onOpenCart={() => {
           if (activePage === 'cart') {
@@ -593,14 +608,13 @@ export default function App() {
           <>
             <HeroBanner
               language={language}
-              onShopCollection={() => scrollToSection('catalog')}
+              freeDeliveryThresholdPkr={storeSettings.freeDeliveryThresholdPkr}
+              onShopNow={() => scrollToSection('featured-products')}
               onBrowseCategories={() => scrollToSection('categories')}
             />
 
             <CategoryStrip
               language={language}
-              categories={storeSettings.categories}
-              products={publishedProducts}
               selectedCategory={selectedCategory}
               onSelectCategory={handleSelectCategory}
             />
@@ -621,65 +635,74 @@ export default function App() {
               onOpenDetail={openProductDetail}
             />
 
-            <SpecialOffersBanner
-              language={language}
-              standardDeliveryFeePkr={storeSettings.standardDeliveryFeePkr}
-              freeDeliveryThresholdPkr={storeSettings.freeDeliveryThresholdPkr}
-              onViewOffers={() => {
-                setSelectedCategory('All');
-                setSortBy('available');
-                scrollToSection('catalog');
-              }}
-            />
-
             <WhyChooseTekkivo language={language} />
 
-            <CustomerReviewsSection language={language} />
+            <NewsletterSection language={language} />
 
             <ContactSection language={language} />
-
-            <NewsletterSection language={language} />
           </>
         )}
       </main>
 
       <Footer
-        categories={storeSettings.categories}
         storeSettings={storeSettings}
-        onSelectCategory={handleSelectCategory}
+        onNavigateSection={(sectionId) => {
+          if (
+            sectionId === 'featured-products' ||
+            sectionId === 'new-arrivals' ||
+            sectionId === 'best-sellers' ||
+            sectionId === 'special-deals' ||
+            sectionId === 'catalog'
+          ) {
+            setSelectedCategory('All');
+            setSearchQuery('');
+          }
+          scrollToSection(sectionId);
+        }}
         onOpenOwnerPortal={() => navigateToPage('owner')}
         onOpenCart={() => navigateToPage('cart')}
         onOpenTrackOrder={() => setIsTrackOrderOpen(true)}
-        onNavigateContact={() => scrollToSection('contact')}
+        onOpenInfoModal={(type) => setActiveInfoModal(type)}
       />
 
-      {/* Floating WhatsApp Contact CTA */}
+      {/* Desktop Floating WhatsApp Contact CTA (mobile uses MobileBottomNav) */}
       {activePage !== 'owner' && (
         <a
           href={floatingWhatsAppUrl}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Chat with TEKKIVO on WhatsApp"
-          className="fixed bottom-5 right-5 z-30 h-12 px-4 rounded-full bg-[#10243D] hover:bg-[#183558] text-white shadow-lg border border-white/15 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold transition-transform hover:scale-[1.03]"
+          className="hidden md:inline-flex fixed bottom-5 right-5 z-30 h-12 px-4 rounded-full bg-[#10243D] hover:bg-[#183558] text-white shadow-lg border border-white/15 items-center gap-2 text-sm font-semibold transition-transform hover:scale-[1.03]"
         >
           <MessageCircle className="w-5 h-5 text-[#F47721]" />
-          <span className="hidden sm:inline">WhatsApp Us</span>
+          <span>WhatsApp Us</span>
         </a>
       )}
 
-      {/* Interactive Drawers & Modals */}
-      <SearchOverlay
-        isOpen={isSearchOpen}
-        products={publishedProducts}
-        onClose={() => setIsSearchOpen(false)}
-        onSelectProduct={openProductDetail}
-        onApplyToCatalog={(q) => {
-          setSearchQuery(q);
-          setSelectedCategory('All');
-          scrollToSection('catalog');
-        }}
-      />
+      {/* Mobile Bottom Navigation: Home, Categories, Cart, WhatsApp */}
+      {activePage !== 'owner' && (
+        <MobileBottomNav
+          categories={storeSettings.categories}
+          selectedCategory={selectedCategory}
+          cartCount={totalCartCount}
+          onGoHome={() => {
+            setSelectedCategory('All');
+            setSearchQuery('');
+            navigateToPage('home');
+          }}
+          onSelectCategory={(category) => {
+            setSelectedCategory(category);
+            if (activePage !== 'home') {
+              navigateToPage('home');
+            } else {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          onOpenCart={() => setIsCartOpen(true)}
+        />
+      )}
 
+      {/* Interactive Drawers & Modals */}
       <ProductDetailModal
         product={activeProduct}
         language={language}
@@ -723,6 +746,13 @@ export default function App() {
         isOpen={isTrackOrderOpen}
         orders={adminOrders}
         onClose={() => setIsTrackOrderOpen(false)}
+      />
+
+      <StoreInfoModal
+        modalType={activeInfoModal}
+        freeDeliveryThresholdPkr={storeSettings.freeDeliveryThresholdPkr}
+        standardDeliveryFeePkr={storeSettings.standardDeliveryFeePkr}
+        onClose={() => setActiveInfoModal(null)}
       />
     </div>
   );

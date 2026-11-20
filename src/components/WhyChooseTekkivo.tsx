@@ -1,82 +1,61 @@
-import { Banknote, ClipboardCheck, MessageCircle, ShieldCheck } from 'lucide-react';
-import { COPY } from '../data/translations';
+import { Banknote, Headphones, ShieldCheck, Truck } from 'lucide-react';
 import { LanguageMode } from '../types/store';
 
 interface WhyChooseTekkivoProps {
   language: LanguageMode;
 }
 
-const VALUE_PILLARS = [
+const TRUST_ITEMS = [
   {
     icon: Banknote,
-    title: 'Cash on Delivery Across Pakistan',
-    titleUr: 'پورے پاکستان میں کیش آن ڈیلیوری',
-    description:
-      'Pay in PKR at your doorstep in Karachi, Lahore, Islamabad, Rawalpindi, and 100+ cities—free delivery on orders Rs. 5,000 and above.',
-  },
-  {
-    icon: MessageCircle,
-    title: 'Direct WhatsApp Order Support',
-    titleUr: 'واٹس ایپ پر فوری آرڈر تصدیق',
-    description:
-      'Every checkout prepares a structured WhatsApp order message so you can confirm city, street address, and delivery timing directly with our team.',
-  },
-  {
-    icon: ClipboardCheck,
-    title: 'Manual Stock Verification Before Dispatch',
-    titleUr: 'روانگی سے قبل دستی اسٹاک تصدیق',
-    description:
-      'Every order is verified manually for product availability before courier dispatch—no surprise cancellations after checkout.',
+    title: 'Cash on Delivery',
+    titleUr: 'کیش آن ڈیلیوری',
+    description: 'Pay in PKR at your doorstep across Pakistan.',
   },
   {
     icon: ShieldCheck,
-    title: '7-Day Parcel Check Support',
-    titleUr: '7 دن چیک اور تبدیلی سہولت',
-    description:
-      'Inspect physical condition on arrival and reach our support line on WhatsApp within 7 days if a manufacturing defect is found.',
+    title: 'Secure Shopping',
+    titleUr: 'محفوظ خریداری',
+    description: 'Manual stock verification before every dispatch.',
+  },
+  {
+    icon: Headphones,
+    title: 'Customer Support',
+    titleUr: 'کسٹمر سپورٹ',
+    description: 'Direct WhatsApp & email order assistance.',
+  },
+  {
+    icon: Truck,
+    title: 'Pakistan-wide Delivery',
+    titleUr: 'پاکستان بھر میں ڈیلیوری',
+    description: 'Free shipping on orders Rs. 5,000 and above.',
   },
 ];
 
 export function WhyChooseTekkivo({ language }: WhyChooseTekkivoProps) {
-  const copy = COPY[language];
-
   return (
     <section
       id="why-tekkivo"
-      className="py-14 sm:py-16 bg-slate-50/70 border-y border-slate-200/80"
+      aria-label="TEKKIVO Customer Guarantees"
+      className="py-6 sm:py-8 bg-white"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#10243D] tracking-tight">
-            {copy.whyChooseTitle}
-          </h2>
-          <p
-            className={`mt-2 text-sm sm:text-base text-slate-600 ${
-              language === 'ur' ? 'font-urdu text-right' : ''
-            }`}
-            dir={language === 'ur' ? 'rtl' : 'ltr'}
-          >
-            {copy.whyChooseSubtitle}
-          </p>
-        </div>
-
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {VALUE_PILLARS.map((pillar) => {
-            const Icon = pillar.icon;
+      <div className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="rounded-2xl bg-[#F4F6F9] border border-slate-200/80 p-4 sm:p-6 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {TRUST_ITEMS.map((item) => {
+            const Icon = item.icon;
             return (
-              <div
-                key={pillar.title}
-                className="bg-white rounded-2xl border border-slate-200/90 p-6 flex flex-col"
-              >
-                <div className="w-11 h-11 rounded-xl bg-[#10243D] text-[#F47721] flex items-center justify-center mb-4">
-                  <Icon className="w-5 h-5" />
+              <div key={item.title} className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 text-[#10243D] flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-[#F47721]" />
                 </div>
-                <h3 className="font-display text-base font-semibold text-[#10243D]">
-                  {language === 'ur' ? pillar.titleUr : pillar.title}
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                  {pillar.description}
-                </p>
+                <div className="min-w-0">
+                  <h3 className="font-display text-xs sm:text-sm font-bold text-[#10243D] leading-snug">
+                    {language === 'ur' ? item.titleUr : item.title}
+                  </h3>
+                  <p className="mt-0.5 text-[11px] sm:text-xs text-slate-600 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
               </div>
             );
           })}

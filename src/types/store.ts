@@ -16,6 +16,7 @@ export type ProductCategory = string;
 
 export interface CategoryDefinition {
   name: ProductCategory;
+  shortLabel?: string;
   nameUr: string;
   shortDesc: string;
 }

@@ -8,11 +8,14 @@ import {
   Lock,
   LogIn,
   LogOut,
+  Minus,
   Plus,
   RotateCcw,
+  Search,
   ShieldAlert,
   Trash2,
   Upload,
+  X,
 } from 'lucide-react';
 import { OwnerProductCostMeta } from '../data/ownerCatalogMeta';
 import {
@@ -197,6 +200,10 @@ export function OwnerPortalPage({
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [seedFeedback, setSeedFeedback] = useState('');
   const [seeding, setSeeding] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [adminProductSearch, setAdminProductSearch] = useState('');
+  const [adminCategoryFilter, setAdminCategoryFilter] = useState<string>('All');
+  const [productAddedMsg, setProductAddedMsg] = useState('');
 
   const defaultCategory =
     storeSettings.categories[0]?.name || 'Electronics & Gadgets';
@@ -405,7 +412,7 @@ export function OwnerPortalPage({
       setSeedFeedback(
         count > 0
           ? `Synced ${count} missing starter product(s) to Cloud Firestore.`
-          : 'All 7 starter products are already synced in Cloud Firestore.'
+          : 'All starter products are already synced in Cloud Firestore.'
       );
     } catch {
       setSeedFeedback('Unable to sync right now — check network or permissions.');
@@ -510,6 +517,9 @@ export function OwnerPortalPage({
     setNewSpecsText('');
     setNewImage('');
     setNewGalleryText('');
+    setShowAddForm(false);
+    setProductAddedMsg(`Added "${title}" to catalog.`);
+    window.setTimeout(() => setProductAddedMsg(''), 3000);
   };
 
   const handleSaveDeliverySettings = (e: FormEvent) => {
@@ -569,6 +579,18 @@ export function OwnerPortalPage({
       categories: storeSettings.categories.filter((c) => c.name !== catName),
     });
   };
+
+  const filteredAdminProducts = products.filter((p) => {
+    const matchesCat =
+      adminCategoryFilter === 'All' || p.category === adminCategoryFilter;
+    const q = adminProductSearch.trim().toLowerCase();
+    const matchesQuery =
+      !q ||
+      p.title.toLowerCase().includes(q) ||
+      p.sku.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q);
+    return matchesCat && matchesQuery;
+  });
 
   return (
     <section
@@ -972,30 +994,278 @@ export function OwnerPortalPage({
             )}
           </>
         ) : activeTab === 'catalog' ? (
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="font-display text-lg font-bold text-[#10243D]">
-                  Editable Product Catalogue
+                  Product Management ({products.length})
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600">
-                  Edit product names, categories, descriptions, specs,
-                  multi-image galleries, selling prices, discounts, and stock
-                  confirmation status.
+                  Add new products, update PKR prices, adjust stock quantities,
+                  and manage photos in one place.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={onResetCatalog}
-                className="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-[#10243D] inline-flex items-center gap-2 cursor-pointer"
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm((prev) => !prev)}
+                  className="h-10 px-4 rounded-xl bg-[#F47721] hover:bg-[#e06512] text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  {showAddForm ? (
+                    <>
+                      <X className="w-4 h-4" />
+                      <span>Close Form</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      <span>Add New Product</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={onResetCatalog}
+                  className="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-[#10243D] inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Restore Starter Products</span>
+                </button>
+              </div>
+            </div>
+
+            {productAddedMsg && (
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center gap-2 text-xs sm:text-sm font-medium text-emerald-900">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                <span>{productAddedMsg}</span>
+              </div>
+            )}
+
+            {/* Add New Product Form (Collapsible at Top) */}
+            {showAddForm && (
+              <form
+                onSubmit={handleCreateProduct}
+                className="rounded-2xl bg-white border-2 border-[#F47721]/40 shadow-sm p-5 sm:p-6 space-y-4"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Restore Starter 7 Products</span>
-              </button>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-[#F47721]" />
+                    <h3 className="font-display text-base sm:text-lg font-bold text-[#10243D]">
+                      Add New Product
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddForm(false)}
+                    className="h-8 px-2.5 rounded-lg text-xs font-medium text-slate-500 hover:text-[#10243D] hover:bg-slate-100 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Product Name *"
+                    className="sm:col-span-2 h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
+                  />
+                  <select
+                    value={newCategory}
+                    onChange={(e) =>
+                      setNewCategory(e.target.value as ProductCategory)
+                    }
+                    className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-[#10243D]"
+                  >
+                    {storeSettings.categories.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={newSku}
+                    onChange={(e) => setNewSku(e.target.value)}
+                    placeholder="Store SKU (optional)"
+                    className="h-10 px-3 rounded-xl border border-slate-200 text-sm font-mono text-[#10243D]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+                  <input
+                    type="text"
+                    value={newSupplierId}
+                    onChange={(e) => setNewSupplierId(e.target.value)}
+                    placeholder="Supplier ID (Owner)"
+                    className="h-10 px-3 rounded-xl border border-slate-200 text-sm font-mono text-[#10243D]"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    value={newSupplierCost}
+                    onChange={(e) => setNewSupplierCost(e.target.value)}
+                    placeholder="Supplier Cost PKR"
+                    className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    value={newSellingPrice}
+                    onChange={(e) => setNewSellingPrice(e.target.value)}
+                    placeholder="Selling Price PKR *"
+                    className="h-10 px-3 rounded-xl border border-slate-200 text-sm font-semibold text-[#10243D]"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    value={newCompareAtPrice}
+                    onChange={(e) => setNewCompareAtPrice(e.target.value)}
+                    placeholder="Compare-At PKR"
+                    className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
+                  />
+                  <select
+                    value={newStockStatus}
+                    onChange={(e) =>
+                      setNewStockStatus(
+                        e.target.value as StockConfirmationStatus
+                      )
+                    }
+                    className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-[#10243D]"
+                  >
+                    <option value="pending_confirmation">
+                      Pending Confirmation
+                    </option>
+                    <option value="confirmed">Confirmed In Stock</option>
+                    <option value="out_of_stock">Out of Stock</option>
+                  </select>
+                  <input
+                    type="number"
+                    min={0}
+                    disabled={newStockStatus === 'out_of_stock'}
+                    value={newStockStatus === 'out_of_stock' ? '0' : newStock}
+                    onChange={(e) => setNewStock(e.target.value)}
+                    placeholder="Listed Stock"
+                    className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D] disabled:bg-slate-100"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={newColors}
+                    onChange={(e) => setNewColors(e.target.value)}
+                    placeholder="Colours (e.g. Black, White)"
+                    className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
+                  />
+                  <input
+                    type="text"
+                    value={newConditionNote}
+                    onChange={(e) => setNewConditionNote(e.target.value)}
+                    placeholder="Condition Note (e.g. Without Box)"
+                    className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <textarea
+                    rows={2}
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Exact listing description (do not invent specs)"
+                    className="p-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
+                  />
+                  <textarea
+                    rows={2}
+                    value={newSpecsText}
+                    onChange={(e) => setNewSpecsText(e.target.value)}
+                    placeholder="Optional Specs (one per line, e.g. Power: 1000W)"
+                    className="p-3 rounded-xl border border-slate-200 text-xs font-mono text-[#10243D]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <label className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-[#10243D] inline-flex items-center gap-1.5 cursor-pointer">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload Exact Photo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleNewPhotoUpload}
+                          className="sr-only"
+                        />
+                      </label>
+                      {newImage && (
+                        <span className="text-xs text-emerald-700 font-medium">
+                          Photo attached
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="url"
+                      value={newImage.startsWith('data:') ? '' : newImage}
+                      onChange={(e) => setNewImage(e.target.value)}
+                      placeholder="Or paste primary image URL"
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs text-[#10243D]"
+                    />
+                  </div>
+
+                  <textarea
+                    rows={2}
+                    value={newGalleryText}
+                    onChange={(e) => setNewGalleryText(e.target.value)}
+                    placeholder="Additional gallery image URLs (one per line)"
+                    className="p-3 rounded-xl border border-slate-200 text-xs font-mono text-[#10243D]"
+                  />
+                </div>
+
+                {productFormError && (
+                  <p className="text-xs font-medium text-rose-700">
+                    {productFormError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  className="h-11 px-6 rounded-xl bg-[#F47721] hover:bg-[#e06512] text-white text-sm font-semibold cursor-pointer"
+                >
+                  Save &amp; Publish Product
+                </button>
+              </form>
+            )}
+
+            {/* Quick Admin Search & Category Filter */}
+            <div className="rounded-2xl bg-white border border-slate-200 p-3.5 flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="search"
+                  value={adminProductSearch}
+                  onChange={(e) => setAdminProductSearch(e.target.value)}
+                  placeholder="Filter products by name, SKU, or category..."
+                  className="w-full h-10 pl-9 pr-3 rounded-xl border border-slate-200 text-sm text-[#10243D] focus:outline-none focus:border-[#F47721]"
+                />
+              </div>
+              <select
+                value={adminCategoryFilter}
+                onChange={(e) => setAdminCategoryFilter(e.target.value)}
+                aria-label="Filter admin products by category"
+                className="h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm font-medium text-[#10243D] focus:outline-none focus:border-[#F47721]"
+              >
+                <option value="All">All Categories ({products.length})</option>
+                {storeSettings.categories.map((c) => (
+                  <option key={c.name} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-4">
-              {products.map((product) => {
+              {filteredAdminProducts.map((product) => {
                 const meta = ownerMetaMap[product.id];
                 const supplierCost = meta?.supplierCostPkr ?? 0;
                 const unitProfit = product.sellingPricePkr - supplierCost;
@@ -1241,20 +1511,58 @@ export function OwnerPortalPage({
                           <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                             Listed Stock Qty
                           </label>
-                          <input
-                            type="number"
-                            min={0}
-                            disabled={
-                              product.stockConfirmationStatus === 'out_of_stock'
-                            }
-                            value={product.stock}
-                            onChange={(e) =>
-                              onUpdateProduct(product.id, {
-                                stock: Math.max(0, Number(e.target.value) || 0),
-                              })
-                            }
-                            className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm tabular-nums text-[#10243D] disabled:bg-slate-100"
-                          />
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              aria-label={`Decrease stock for ${product.title}`}
+                              disabled={
+                                product.stockConfirmationStatus ===
+                                  'out_of_stock' || product.stock <= 0
+                              }
+                              onClick={() =>
+                                onUpdateProduct(product.id, {
+                                  stock: Math.max(0, product.stock - 1),
+                                })
+                              }
+                              className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-40 inline-flex items-center justify-center text-[#10243D] cursor-pointer"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <input
+                              type="number"
+                              min={0}
+                              disabled={
+                                product.stockConfirmationStatus ===
+                                'out_of_stock'
+                              }
+                              value={product.stock}
+                              onChange={(e) =>
+                                onUpdateProduct(product.id, {
+                                  stock: Math.max(
+                                    0,
+                                    Number(e.target.value) || 0
+                                  ),
+                                })
+                              }
+                              className="w-full h-10 px-2 text-center rounded-xl border border-slate-200 text-sm font-semibold tabular-nums text-[#10243D] disabled:bg-slate-100"
+                            />
+                            <button
+                              type="button"
+                              aria-label={`Increase stock for ${product.title}`}
+                              disabled={
+                                product.stockConfirmationStatus ===
+                                'out_of_stock'
+                              }
+                              onClick={() =>
+                                onUpdateProduct(product.id, {
+                                  stock: product.stock + 1,
+                                })
+                              }
+                              className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-40 inline-flex items-center justify-center text-[#10243D] cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
 
                         <div>
@@ -1420,190 +1728,24 @@ export function OwnerPortalPage({
                   </div>
                 );
               })}
-            </div>
-
-            {/* Add New Product Form */}
-            <form
-              onSubmit={handleCreateProduct}
-              className="rounded-2xl bg-white border border-slate-200 p-5 sm:p-6 space-y-4"
-            >
-              <div className="flex items-center gap-2">
-                <Plus className="w-5 h-5 text-[#F47721]" />
-                <h3 className="font-display text-base sm:text-lg font-bold text-[#10243D]">
-                  Add New Product
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Product Name *"
-                  className="sm:col-span-2 h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
-                />
-                <select
-                  value={newCategory}
-                  onChange={(e) =>
-                    setNewCategory(e.target.value as ProductCategory)
-                  }
-                  className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-[#10243D]"
-                >
-                  {storeSettings.categories.map((c) => (
-                    <option key={c.name} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  value={newSku}
-                  onChange={(e) => setNewSku(e.target.value)}
-                  placeholder="Store SKU (optional)"
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-sm font-mono text-[#10243D]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-                <input
-                  type="text"
-                  value={newSupplierId}
-                  onChange={(e) => setNewSupplierId(e.target.value)}
-                  placeholder="Supplier ID (Owner)"
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-sm font-mono text-[#10243D]"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  value={newSupplierCost}
-                  onChange={(e) => setNewSupplierCost(e.target.value)}
-                  placeholder="Supplier Cost PKR"
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
-                />
-                <input
-                  type="number"
-                  min={1}
-                  value={newSellingPrice}
-                  onChange={(e) => setNewSellingPrice(e.target.value)}
-                  placeholder="Selling Price PKR *"
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-sm font-semibold text-[#10243D]"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  value={newCompareAtPrice}
-                  onChange={(e) => setNewCompareAtPrice(e.target.value)}
-                  placeholder="Compare-At PKR"
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
-                />
-                <select
-                  value={newStockStatus}
-                  onChange={(e) =>
-                    setNewStockStatus(e.target.value as StockConfirmationStatus)
-                  }
-                  className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-[#10243D]"
-                >
-                  <option value="pending_confirmation">
-                    Pending Confirmation
-                  </option>
-                  <option value="confirmed">Confirmed In Stock</option>
-                  <option value="out_of_stock">Out of Stock</option>
-                </select>
-                <input
-                  type="number"
-                  min={0}
-                  disabled={newStockStatus === 'out_of_stock'}
-                  value={newStockStatus === 'out_of_stock' ? '0' : newStock}
-                  onChange={(e) => setNewStock(e.target.value)}
-                  placeholder="Listed Stock"
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D] disabled:bg-slate-100"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  value={newColors}
-                  onChange={(e) => setNewColors(e.target.value)}
-                  placeholder="Colours (e.g. Black, White)"
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
-                />
-                <input
-                  type="text"
-                  value={newConditionNote}
-                  onChange={(e) => setNewConditionNote(e.target.value)}
-                  placeholder="Condition Note (e.g. Without Box)"
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <textarea
-                  rows={2}
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                  placeholder="Exact listing description (do not invent specs)"
-                  className="p-3 rounded-xl border border-slate-200 text-sm text-[#10243D]"
-                />
-                <textarea
-                  rows={2}
-                  value={newSpecsText}
-                  onChange={(e) => setNewSpecsText(e.target.value)}
-                  placeholder="Optional Specs (one per line, e.g. Power: 1000W)"
-                  className="p-3 rounded-xl border border-slate-200 text-xs font-mono text-[#10243D]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <label className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-[#10243D] inline-flex items-center gap-1.5 cursor-pointer">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>Upload Exact Photo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleNewPhotoUpload}
-                        className="sr-only"
-                      />
-                    </label>
-                    {newImage && (
-                      <span className="text-xs text-emerald-700 font-medium">
-                        Photo attached
-                      </span>
-                    )}
-                  </div>
-                  <input
-                    type="url"
-                    value={newImage.startsWith('data:') ? '' : newImage}
-                    onChange={(e) => setNewImage(e.target.value)}
-                    placeholder="Or paste primary image URL"
-                    className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs text-[#10243D]"
-                  />
+              {filteredAdminProducts.length === 0 && (
+                <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
+                  <p className="font-display text-base font-semibold text-[#10243D]">
+                    No products match your filter
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminProductSearch('');
+                      setAdminCategoryFilter('All');
+                    }}
+                    className="mt-3 h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-[#10243D] cursor-pointer"
+                  >
+                    Clear Filter
+                  </button>
                 </div>
-
-                <textarea
-                  rows={2}
-                  value={newGalleryText}
-                  onChange={(e) => setNewGalleryText(e.target.value)}
-                  placeholder="Additional gallery image URLs (one per line)"
-                  className="p-3 rounded-xl border border-slate-200 text-xs font-mono text-[#10243D]"
-                />
-              </div>
-
-              {productFormError && (
-                <p className="text-xs font-medium text-rose-700">
-                  {productFormError}
-                </p>
               )}
-
-              <button
-                type="submit"
-                className="h-11 px-6 rounded-xl bg-[#F47721] hover:bg-[#e06512] text-white text-sm font-semibold cursor-pointer"
-              >
-                Add Product to Store
-              </button>
-            </form>
+            </div>
           </div>
         ) : activeTab === 'settings' ? (
           <div className="space-y-8">

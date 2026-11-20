@@ -31,20 +31,6 @@ export function ProductCard({
   );
   const canOrder = isProductOrderable(product);
 
-  const stockLabel =
-    product.stockConfirmationStatus === 'out_of_stock' || product.stock <= 0
-      ? 'Out of Stock'
-      : product.stockConfirmationStatus === 'pending_confirmation'
-      ? `Pending Confirmation (${product.stock})`
-      : `In Stock (${product.stock})`;
-
-  const stockColorClass =
-    product.stockConfirmationStatus === 'out_of_stock' || product.stock <= 0
-      ? 'text-rose-700 font-semibold'
-      : product.stockConfirmationStatus === 'pending_confirmation'
-      ? 'text-amber-800 font-medium'
-      : 'text-emerald-700 font-medium';
-
   const handleAdd = () => {
     if (!canOrder) return;
     onAddToCart(product.id);
@@ -52,14 +38,38 @@ export function ProductCard({
     window.setTimeout(() => setJustAdded(false), 1200);
   };
 
+  // Single concise badge: real discount first, otherwise Out of Stock or New Arrival (max 1)
+  const cornerTag =
+    discountPct !== null
+      ? {
+          text: `-${discountPct}%`,
+          className: 'bg-[#F47721] text-white',
+        }
+      : !canOrder
+      ? {
+          text: 'Out of Stock',
+          className: 'bg-slate-800 text-white',
+        }
+      : product.isNewArrival
+      ? {
+          text: 'New',
+          className: 'bg-[#10243D] text-white',
+        }
+      : product.isBestSeller
+      ? {
+          text: 'Best Seller',
+          className: 'bg-[#10243D] text-white',
+        }
+      : null;
+
   return (
-    <article className="group bg-white rounded-2xl border border-slate-200/90 overflow-hidden flex flex-col transition-all hover:shadow-md hover:-translate-y-0.5">
-      {/* Product Image */}
-      <div className="relative aspect-[4/3] w-full bg-[#F5F7FA] overflow-hidden">
+    <article className="group bg-white rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-md hover:-translate-y-0.5 overflow-hidden flex flex-col transition-all">
+      {/* Compact Square-Proportioned Image Box (~124-136px on mobile, ~140px on desktop) */}
+      <div className="relative h-[124px] sm:h-[136px] xl:h-[144px] w-full bg-white border-b border-slate-100 overflow-hidden">
         <button
           type="button"
           onClick={() => onOpenDetail(product)}
-          className="w-full h-full block cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F47721]"
+          className="w-full h-full block p-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F47721]"
           aria-label={`View details for ${product.title}`}
         >
           <ResilientImage
@@ -67,13 +77,19 @@ export function ProductCard({
             alt={product.imageAlt}
             fallbackLabel={product.title}
             fallbackSubtext={
-              canOrder
-                ? 'Exact product photo pending upload'
-                : 'Currently out of stock'
+              canOrder ? 'Photo pending upload' : 'Currently out of stock'
             }
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </button>
+
+        {cornerTag && (
+          <span
+            className={`absolute top-1.5 left-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums leading-none ${cornerTag.className}`}
+          >
+            {cornerTag.text}
+          </span>
+        )}
 
         <button
           type="button"
@@ -84,30 +100,22 @@ export function ProductCard({
               : `Add ${product.title} to wishlist`
           }
           aria-pressed={isWishlisted}
-          className={`absolute top-2.5 right-2.5 w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
+          className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
             isWishlisted
-              ? 'bg-[#F47721] text-white shadow-sm'
-              : 'bg-white/95 text-[#10243D] hover:bg-white shadow-sm'
+              ? 'bg-[#F47721] text-white shadow-xs'
+              : 'bg-white/95 text-[#10243D] hover:bg-slate-100 border border-slate-200/70'
           }`}
         >
           <Heart
-            className="w-4 h-4"
+            className="w-3.5 h-3.5"
             fill={isWishlisted ? 'currentColor' : 'none'}
           />
         </button>
       </div>
 
-      {/* Product Metadata, Pricing & Action */}
-      <div className="p-3.5 sm:p-5 flex flex-col flex-1">
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs text-slate-500">
-          <span className="font-medium text-slate-600 truncate max-w-full">
-            {product.category}
-          </span>
-          <span aria-hidden="true">·</span>
-          <span className={stockColorClass}>{stockLabel}</span>
-        </div>
-
-        <h3 className="mt-1.5 font-display text-sm sm:text-[17px] font-semibold text-[#10243D] leading-snug line-clamp-2">
+      {/* Compact Card Body: Small Readable Title, Clear PKR Price, Compact Add to Cart */}
+      <div className="p-2.5 sm:p-3 flex flex-col flex-1">
+        <h3 className="font-display text-xs sm:text-[13px] font-semibold text-[#10243D] leading-snug line-clamp-2 min-h-[2.1rem] sm:min-h-[2.25rem]">
           <button
             type="button"
             onClick={() => onOpenDetail(product)}
@@ -117,41 +125,29 @@ export function ProductCard({
           </button>
         </h3>
 
-        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 line-clamp-2 leading-relaxed">
-          {product.shortSpec}
-        </p>
-
-        {product.conditionNote && (
-          <p className="mt-2 text-[11px] sm:text-xs text-slate-600 bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1.5 line-clamp-2">
-            {product.conditionNote}
-          </p>
-        )}
-
-        <div className="mt-auto pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-baseline gap-1.5">
-              <span className="tabular-nums font-display text-base sm:text-lg font-bold text-[#10243D]">
-                {formatPkr(product.sellingPricePkr)}
+        {/* Price in PKR (No fake discounts, no fake star ratings) */}
+        <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+          <span className="tabular-nums font-display text-sm sm:text-[15px] font-bold text-[#10243D]">
+            {formatPkr(product.sellingPricePkr)}
+          </span>
+          {product.compareAtPricePkr &&
+            product.compareAtPricePkr > product.sellingPricePkr && (
+              <span className="tabular-nums text-[11px] text-slate-400 line-through">
+                {formatPkr(product.compareAtPricePkr)}
               </span>
-              {product.compareAtPricePkr && (
-                <span className="tabular-nums text-xs text-slate-400 line-through">
-                  {formatPkr(product.compareAtPricePkr)}
-                </span>
-              )}
-            </div>
-            {discountPct !== null && (
-              <p className="tabular-nums text-[11px] font-semibold text-[#F47721]">
-                Save {discountPct}%
-              </p>
             )}
-          </div>
+        </div>
 
+        {/* Compact Full-Width Add to Cart */}
+        <div className="mt-auto pt-2">
           <button
             type="button"
             disabled={!canOrder}
             onClick={handleAdd}
-            aria-label={canOrder ? `${copy.addToCart} ${product.title}` : 'Unavailable'}
-            className={`h-9 sm:h-10 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
+            aria-label={
+              canOrder ? `${copy.addToCart} ${product.title}` : 'Out of Stock'
+            }
+            className={`w-full h-8 sm:h-9 px-2.5 rounded-lg text-[11px] sm:text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F47721] ${
               justAdded
                 ? 'bg-emerald-700 text-white'
                 : 'bg-[#10243D] hover:bg-[#F47721] text-white'
@@ -159,15 +155,13 @@ export function ProductCard({
           >
             {justAdded ? (
               <>
-                <Check className="w-4 h-4" />
-                <span className="hidden sm:inline">{copy.addedToCart}</span>
+                <Check className="w-3.5 h-3.5 shrink-0" />
+                <span>{copy.addedToCart}</span>
               </>
             ) : (
               <>
-                <ShoppingBag className="w-4 h-4" />
-                <span className="hidden sm:inline">
-                  {canOrder ? copy.addToCart : 'Unavailable'}
-                </span>
+                <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+                <span>{canOrder ? copy.addToCart : 'Out of Stock'}</span>
               </>
             )}
           </button>
